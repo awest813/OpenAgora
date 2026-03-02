@@ -17,17 +17,14 @@
 namespace fs = std::filesystem;
 namespace ui = ImGui;
 
-LoadMenu::LoadMenu()
-{
-  // still do nothing
-}
+LoadMenu::LoadMenu() {}
 
 void LoadMenu::draw() const
 {
   m_result = e_none;
   m_filename.clear();
 
-  ImVec2 windowSize(500, 500);
+  ImVec2 windowSize(480, 480);
   ImVec2 screenSize = ui::GetIO().DisplaySize;
 
   auto &uiManager = UIManager::instance();
@@ -36,30 +33,35 @@ void LoadMenu::draw() const
   ui::SetNextWindowPos(ImVec2((screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2));
   ui::SetNextWindowSize(windowSize);
 
-  constexpr float btnSide = 40;
-  const ImVec2 buttonSize(windowSize.x - btnSide * 3, btnSide);
-  const ImVec2 buttonOffset((windowSize.x - buttonSize.x) / 2, buttonSize.y / 2);
-  const ImVec2 widgetSize((windowSize.x / 2) - 8, 20);
+  const float margin = 24.f;
+  constexpr float btnSide = 36;
+  const ImVec2 buttonSize(windowSize.x - margin * 2 - btnSide - 10, 40);
 
   ui::PushFont(layout.font);
-  ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-  ui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, buttonOffset.y));
+  ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(margin, 20));
+  ui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 10));
 
   bool open = true;
   ui::BeginCt("LoadDialog", &open,
               ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
                   ImGuiWindowFlags_NoScrollWithMouse);
 
-  // empty header
-  ui::PushItemWidth(widgetSize.x);
+  {
+    auto textWidth = ui::CalcTextSize("Load City").x;
+    ui::SetCursorPosX((windowSize.x - textWidth) * 0.5f);
+    ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.30f, 0.78f, 0.74f, 1.00f));
+    ui::Text("Load City");
+    ui::PopStyleColor();
+  }
 
-  // header label
-  auto textWidth = ImGui::CalcTextSize("Load city").x;
-  ImGui::SetCursorPosX((windowSize.x - textWidth) * 0.5f);
-  ui::LabelText("##loadcitylbl", "Load city");
+  ui::Spacing();
+  ui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.22f, 0.28f, 0.36f, 0.40f));
+  ui::Separator();
+  ui::PopStyleColor();
+  ui::Spacing();
 
-  ImGui::BeginChild("##loadbuttons", {0.f, windowSize.y * 0.6f}, false, ImGuiWindowFlags_NoTitleBar);
+  ui::BeginChild("##loadbuttons", {0.f, windowSize.y - 160.f}, false,
+                 ImGuiWindowFlags_NoTitleBar);
 
   std::string path = CYTOPIA_DATA_DIR + "/saves";
   for (const auto &entry : fs::directory_iterator(path))
@@ -67,8 +69,6 @@ void LoadMenu::draw() const
     if (!fs::is_regular_file(entry) || entry.path().extension() != ".cts")
       continue;
 
-    ui::Dummy({btnSide / 2.f, 0.f});
-    ui::SameLine();
     if (ui::ButtonCt(entry.path().filename().string().c_str(), buttonSize))
     {
       m_filename = entry.path().filename().string();
@@ -76,35 +76,29 @@ void LoadMenu::draw() const
     }
 
     ui::SameLine();
-    ui::Dummy({btnSide / 2.f, 0.f});
-    ui::SameLine();
+    ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.40f, 0.35f, 1.00f));
     if (ui::ButtonCt("X", {btnSide, btnSide}))
     {
       m_filename = entry.path().filename().string();
       m_result = e_delete_file;
     }
+    ui::PopStyleColor();
   }
 
   ui::EndChild();
-  ui::PopItemWidth();
 
-  ImVec2 btnSize(windowSize.x / 4, btnSide);
-
-  ui::SetCursorPosY(windowSize.y - btnSize.y * 2);
-  ui::Dummy({(windowSize.x - btnSize.x) / 2.f, 0.f});
-  ui::SameLine();
-  if (ui::ButtonCt("OK", btnSize))
+  const ImVec2 closeBtnSize(160, 40);
+  ui::SetCursorPosY(windowSize.y - closeBtnSize.y - 24.f);
+  ui::SetCursorPosX((windowSize.x - closeBtnSize.x) / 2.f);
+  if (ui::ButtonCt("Close", closeBtnSize))
   {
     m_result = e_close;
   }
 
   ui::PopFont();
-  ui::PopStyleVar(3);
+  ui::PopStyleVar(2);
 
   ui::End();
 }
 
-LoadMenu::~LoadMenu()
-{
-  // still do nothing
-}
+LoadMenu::~LoadMenu() {}

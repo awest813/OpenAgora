@@ -6,18 +6,15 @@
 
 namespace ui = ImGui;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 static ImVec4 barColor(float value)
 {
   if (value >= 66.f)
-    return {0.24f, 0.78f, 0.35f, 1.f}; // green
+    return {0.24f, 0.78f, 0.35f, 1.f};
   if (value >= 33.f)
-    return {0.95f, 0.76f, 0.15f, 1.f}; // yellow
-  return {0.90f, 0.25f, 0.20f, 1.f};   // red
+    return {0.95f, 0.76f, 0.15f, 1.f};
+  return {0.90f, 0.25f, 0.20f, 1.f};
 }
 
-// Returns a UTF-8 arrow character comparing current with previous.
 static const char *trendArrow(float cur, float prev)
 {
   const float delta = cur - prev;
@@ -26,7 +23,13 @@ static const char *trendArrow(float cur, float prev)
   return "-";
 }
 
-// ── draw() ────────────────────────────────────────────────────────────────────
+static ImVec4 trendColor(float cur, float prev)
+{
+  const float delta = cur - prev;
+  if (delta >  2.f) return {0.24f, 0.78f, 0.35f, 1.f};
+  if (delta < -2.f) return {0.90f, 0.25f, 0.20f, 1.f};
+  return {0.50f, 0.54f, 0.58f, 1.f};
+}
 
 void CityIndicesPanel::draw() const
 {
@@ -34,13 +37,13 @@ void CityIndicesPanel::draw() const
   const CityIndicesData &cur  = ci.current();
   const CityIndicesData &prev = ci.previous();
 
-  constexpr float panelWidth  = 220.f;
-  constexpr float panelHeight = 175.f;
-  const ImVec2 panelPos{4.f, 4.f}; // top-left, with a small margin
+  constexpr float panelWidth  = 230.f;
+  constexpr float panelHeight = 195.f;
+  const ImVec2 panelPos{10.f, 10.f};
 
   ui::SetNextWindowPos(panelPos, ImGuiCond_Always);
   ui::SetNextWindowSize({panelWidth, panelHeight}, ImGuiCond_Always);
-  ui::SetNextWindowBgAlpha(0.82f);
+  ui::SetNextWindowBgAlpha(0.88f);
 
   const ImGuiWindowFlags flags =
       ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
@@ -54,8 +57,14 @@ void CityIndicesPanel::draw() const
     return;
   }
 
-  ui::TextDisabled("City Indices");
+  ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.30f, 0.78f, 0.74f, 1.00f));
+  ui::Text("City Indices");
+  ui::PopStyleColor();
+
+  ui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.22f, 0.28f, 0.36f, 0.40f));
   ui::Separator();
+  ui::PopStyleColor();
+  ui::Spacing();
 
   struct Row
   {
@@ -73,22 +82,25 @@ void CityIndicesPanel::draw() const
   };
 
   ui::Columns(2, "##idx_cols", false);
-  ui::SetColumnWidth(0, 92.f);
+  ui::SetColumnWidth(0, 100.f);
 
   for (const auto &row : rows)
   {
-    // left column: label + trend arrow
     ui::TextUnformatted(row.label);
     ui::SameLine(0.f, 4.f);
-    ui::TextDisabled("%s", trendArrow(row.cur, row.prev));
+    ui::PushStyleColor(ImGuiCol_Text, trendColor(row.cur, row.prev));
+    ui::Text("%s", trendArrow(row.cur, row.prev));
+    ui::PopStyleColor();
     ui::NextColumn();
 
-    // right column: coloured progress bar
     ui::PushStyleColor(ImGuiCol_PlotHistogram, barColor(row.cur));
+    ui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.14f, 0.16f, 0.20f, 1.00f));
+    ui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
     char overlay[8];
     snprintf(overlay, sizeof(overlay), "%.0f", row.cur);
     ui::ProgressBar(row.cur / 100.f, ImVec2(-1.f, 14.f), overlay);
-    ui::PopStyleColor();
+    ui::PopStyleVar();
+    ui::PopStyleColor(2);
     ui::NextColumn();
   }
 

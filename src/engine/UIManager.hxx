@@ -48,6 +48,8 @@ public:
 
   void init();
 
+  void setupTheme();
+
   struct ImFont *loadFont(const std::string &name, uint32_t size);
   void initializeImGuiFonts();
 

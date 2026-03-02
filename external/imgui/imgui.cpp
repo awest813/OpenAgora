@@ -5773,21 +5773,13 @@ void ImGui::RenderWindowDecorations(ImGuiWindow* window, const ImRect& title_bar
                 bg_col = (bg_col & ~IM_COL32_A_MASK) | (IM_F32_TO_INT8_SAT(alpha) << IM_COL32_A_SHIFT);
             if (flags & ImGuiWindowFlags_CtBackground)
             {
-              const uint8_t bgColor = 128;
-              const uint8_t bgColorFrame = 150;
-              const uint8_t bgColorFrameShade = 172;
+              const float rounding = window_rounding > 0.f ? window_rounding : 8.0f;
 
-              window->DrawList->AddRectFilled(window->Pos, window->Pos + window->Size, ImColor(bgColorFrame, bgColorFrame, bgColorFrame), 0.f, 0);
-              window->DrawList->AddRectFilled(window->Pos + ImVec2(2, 2), window->Pos + window->Size - ImVec2(2, 2), ImColor(bgColorFrameShade, bgColorFrameShade, bgColorFrameShade), 0.f, 0);
+              ImU32 panelBg = ImColor(0.09f, 0.10f, 0.13f, 0.96f);
+              ImU32 panelBorder = ImColor(0.22f, 0.28f, 0.36f, 0.60f);
 
-              if (window->Size.y >= 8 && window->Size.x >= 4)
-              {
-                window->DrawList->AddRectFilled(window->Pos + ImVec2(4, 4), window->Pos + window->Size - ImVec2(4, 4), ImColor(bgColorFrame, bgColorFrame, bgColorFrame), 0.f, 0);
-              }
-              if (window->Size.y >= 12 && window->Size.x >= 6)
-              {
-                window->DrawList->AddRectFilled(window->Pos + ImVec2(6, 6), window->Pos + window->Size - ImVec2(6, 6), ImColor(bgColor, bgColor, bgColor), 0.f, 0);
-              }
+              window->DrawList->AddRectFilled(window->Pos, window->Pos + window->Size, panelBg, rounding);
+              window->DrawList->AddRect(window->Pos, window->Pos + window->Size, panelBorder, rounding, 0, 1.4f);
             }
             else
             {

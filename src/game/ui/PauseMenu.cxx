@@ -12,12 +12,8 @@ namespace ui = ImGui;
 
 void PauseMenu::draw() const
 {
-  ImVec2 windowSize(300, 400);
+  ImVec2 windowSize(320, 420);
   ImVec2 screenSize = ui::GetIO().DisplaySize;
-
-  // dont remove yet, need for tuning
-  //bool show = true;
-  //ui::ShowDemoWindow(&show);
 
   auto &uiManager = UIManager::instance();
 
@@ -25,21 +21,33 @@ void PauseMenu::draw() const
   ui::SetNextWindowPos(ImVec2((screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2));
   ui::SetNextWindowSize(windowSize);
 
-  const ImVec2 buttonSize(200, 40);
-  const ImVec2 buttonOffset((windowSize.x - buttonSize.x) / 2, buttonSize.y / 2);
+  const ImVec2 buttonSize(240, 44);
+  const float buttonSpacing = 12.f;
+  const float sideMargin = (windowSize.x - buttonSize.x) / 2;
 
   ui::PushFont(layout.font);
-  ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-  ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(buttonOffset.x, 0));
-  ui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, buttonOffset.y));
+  ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(sideMargin, 20));
+  ui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, buttonSpacing));
 
   bool open = true;
   ui::BeginCt("PauseMenu", &open,
               ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
                   ImGuiWindowFlags_NoScrollWithMouse);
 
-  ui::Dummy({0.f, (windowSize.y - (buttonSize.y + buttonOffset.y) * 5) / 2});
+  {
+    auto textWidth = ui::CalcTextSize("Paused").x;
+    ui::SetCursorPosX((windowSize.x - textWidth) * 0.5f);
+    ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.30f, 0.78f, 0.74f, 1.00f));
+    ui::Text("Paused");
+    ui::PopStyleColor();
+  }
+
+  ui::Spacing();
+  ui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.22f, 0.28f, 0.36f, 0.40f));
+  ui::Separator();
+  ui::PopStyleColor();
+  ui::Spacing();
+
   if (ui::ButtonCt("Settings", buttonSize))
   {
     Settings::instance().writeFile();
@@ -61,13 +69,17 @@ void PauseMenu::draw() const
     SignalMediator::instance().signalLoadGame.emit("save.cts");
   }
 
+  ui::Spacing();
+
+  ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.90f, 0.40f, 0.35f, 1.00f));
   if (ui::ButtonCt("Quit Game", buttonSize))
   {
     SignalMediator::instance().signalQuitGame.emit();
   }
+  ui::PopStyleColor();
 
   ui::PopFont();
-  ui::PopStyleVar(4);
+  ui::PopStyleVar(2);
 
   ui::End();
 }

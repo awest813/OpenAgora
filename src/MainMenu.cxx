@@ -112,7 +112,7 @@ bool mainMenu()
     beginFrame();
 
     while (SDL_PollEvent(&event) != 0)
-    { // while there is a pending event
+    {
       ImGui_ImplSDL2_ProcessEvent(&event);
 
       if (event.type == SDL_QUIT)
@@ -134,7 +134,7 @@ bool mainMenu()
       case LoadMenu::e_load_file:
 #ifdef USE_AUDIO
         playAudioMajorSelection();
-#endif //  USE_AUDIO
+#endif
         SignalMediator::instance().signalLoadGame.emit(loadMenu.filename());
         mainMenuLoop = false;
         break;
@@ -145,20 +145,28 @@ bool mainMenu()
     else
     {
       ui::PushFont(buttonFont);
-      ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
       ui::SetCursorPos(logoImgPos);
       ui::Image(logoTex, ImVec2(logoTexW, logoTexH));
 
-      constexpr ImVec2 buttonSize(200, 40);
-      constexpr int buttonInterval = 20;
-      ImVec2 buttonPos(screenWidth / 2 - buttonSize.x / 2, screenHeight / 2 - buttonSize.y);
+      const ImVec2 taglineSize = ui::CalcTextSize("Build the city of your dreams");
+      ImVec2 taglinePos(screenWidth / 2 - taglineSize.x / 2, logoImgPos.y + logoTexH + 8);
+      ui::SetCursorPos(taglinePos);
+      ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 0.54f, 0.58f, 1.00f));
+      ui::Text("Build the city of your dreams");
+      ui::PopStyleColor();
+
+      constexpr ImVec2 buttonSize(260, 48);
+      constexpr int buttonInterval = 14;
+      float menuStartY = taglinePos.y + taglineSize.y + 40;
+      ImVec2 buttonPos(screenWidth / 2.f - buttonSize.x / 2.f, menuStartY);
+
       ui::SetCursorPos(buttonPos);
       if (ui::ButtonCt("New Game", buttonSize))
       {
 #ifdef USE_AUDIO
         playAudioMajorSelection();
-#endif //  USE_AUDIO
+#endif
         mainMenuLoop = false;
         SignalMediator::instance().signalNewGame.emit(true);
       }
@@ -178,15 +186,15 @@ bool mainMenu()
         mainMenuLoop = false;
       }
 
-      constexpr int xOffset = 5, btnSize = 32;
-      ImVec2 leftBottom(xOffset, screenHeight - btnSize - xOffset * 2);
+      constexpr int xOffset = 14, btnSize = 36;
+      ImVec2 leftBottom(xOffset, screenHeight - btnSize - xOffset);
       ui::SetCursorPos(leftBottom);
       if (ui::ImageButton(discordTex, ImVec2(btnSize, btnSize)))
       {
         OSystem::openDir("https://discord.gg/MG3tgYV6ce");
       }
 
-      leftBottom.x += xOffset * 2 + btnSize; // xOffset * 2 because, need interval between buttons
+      leftBottom.x += xOffset + btnSize + 6;
       ui::SetCursorPos(leftBottom);
       if (ui::ImageButton(githubTex, ImVec2(btnSize, btnSize)))
       {
@@ -194,19 +202,18 @@ bool mainMenu()
       }
 
       ui::PopFont();
-      ui::PopStyleVar(1);
     }
 
-    /* FPS counter.*/
-    /** @TODO remove or alter to use existing fps counter from debug menu */
-    constexpr ImVec2 fpsTextPos(5, 5);
+    ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 0.54f, 0.58f, 0.70f));
+    constexpr ImVec2 fpsTextPos(12, 8);
     ui::SetCursorPos(fpsTextPos);
-    ui::Text("[%.1f FPS]", ui::GetIO().Framerate);
+    ui::Text("[%.0f FPS]", ui::GetIO().Framerate);
 
     ImVec2 textSize = ImGui::CalcTextSize(VERSION);
-    const ImVec2 versionPos(screenWidth - textSize.x - 10, screenHeight - textSize.y - 10);
+    const ImVec2 versionPos(screenWidth - textSize.x - 14, screenHeight - textSize.y - 12);
     ui::SetCursorPos(versionPos);
     ui::Text(VERSION);
+    ui::PopStyleColor();
 
     renderFrame();
   }

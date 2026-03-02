@@ -20,8 +20,8 @@
                 "GroupName": "PauseMenuButtons",
                 "Alignment": "CENTER",
                 "LayoutType": "VERTICAL",
-                "Padding": 30,
-                "FontSize": 42
+                "Padding": 20,
+                "FontSize": 20
             }
         ],
         "BuildMenuButtons": [
@@ -29,8 +29,8 @@
                 "GroupName": "BuildMenuButtons",
                 "Alignment": "CENTER",
                 "LayoutType": "VERTICAL",
-                "Padding": 30,
-                "FontSize": 42
+                "Padding": 20,
+                "FontSize": 16
             }
         ],
         "LoadDialogButtons": [
@@ -38,8 +38,8 @@
                 "GroupName": "LoadDialogButtons",
                 "Alignment": "CENTER",
                 "LayoutType": "VERTICAL",
-                "Padding": 40,
-                "FontSize": 42
+                "Padding": 24,
+                "FontSize": 20
             }
         ],
         "MainMenuButtons": [
@@ -47,8 +47,8 @@
                 "GroupName": "MainMenuButtons",
                 "Alignment": "CENTER",
                 "LayoutType": "VERTICAL",
-                "Padding": 40,
-                "FontSize": 42
+                "Padding": 24,
+                "FontSize": 22
             }
         ]
     }
