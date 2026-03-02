@@ -36,6 +36,11 @@ void FeatureFlags::readFile()
   m_eventSystem          = j.value("event_system",            false);
   m_councilCheckpoint    = j.value("council_checkpoint",      false);
   m_cityIndicesDashboard = j.value("city_indices_dashboard",  false);
+  m_governanceCheckpointMonths = j.value("governance_checkpoint_months", 6);
+  m_governanceConstraintThreshold = j.value("governance_constraint_threshold", 40.f);
+  m_governanceEventThreshold = j.value("governance_event_threshold", 30.f);
+  m_governanceSoftFailThreshold = j.value("governance_soft_fail_threshold", 15.f);
+  m_governancePolicyLockMonths = j.value("governance_policy_lock_months", 3);
 
   LOG(LOG_INFO) << "FeatureFlags loaded:"
                 << " affordability=" << m_affordabilitySystem
@@ -44,5 +49,10 @@ void FeatureFlags::readFile()
                 << " governance="    << m_governanceLayer
                 << " events="        << m_eventSystem
                 << " council="       << m_councilCheckpoint
-                << " dashboard="     << m_cityIndicesDashboard;
+                << " dashboard="     << m_cityIndicesDashboard
+                << " checkpointMonths=" << m_governanceCheckpointMonths
+                << " constraintThreshold=" << m_governanceConstraintThreshold
+                << " eventThreshold=" << m_governanceEventThreshold
+                << " softFailThreshold=" << m_governanceSoftFailThreshold
+                << " policyLockMonths=" << m_governancePolicyLockMonths;
 }
