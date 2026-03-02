@@ -9,7 +9,7 @@
 #include <angelscript.h>
 #include <string>
 
-using namespace std;
+using std::string;
 
 /***ImVec2***/
 static void ImVec2DefaultConstructor(ImVec2 *self) { new (self) ImVec2(); }
