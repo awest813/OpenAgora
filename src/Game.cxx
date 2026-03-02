@@ -12,6 +12,11 @@
 #include <MapFunctions.hxx>
 #include "../game/ui/BuildMenu.hxx"
 #include "../game/ui/GameTimeMenu.hxx"
+#include "../game/ui/CityIndicesPanel.hxx"
+#include <CityIndices.hxx>
+#include "services/FeatureFlags.hxx"
+#include "engine/GameObjects/MapNode.hxx"
+#include "engine/common/enums.hxx"
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -141,6 +146,38 @@ void Game::run(bool SkipMenu)
 
   uiManager.addPersistentMenu<GameTimeMenu>();
   uiManager.addPersistentMenu<BuildMenu>();
+
+  if (FeatureFlags::instance().cityIndicesDashboard())
+  {
+    uiManager.addPersistentMenu<CityIndicesPanel>();
+
+    // Tick CityIndices every in-game month (30 game days).
+    gameClock.addGameTimeClockTask(
+        []() -> bool
+        {
+          if (!MapFunctions::instance().getMap())
+            return false;
+
+          const auto &mapNodes = MapFunctions::instance().getMapNodes();
+          std::vector<const TileData *> buildingTiles;
+          buildingTiles.reserve(mapNodes.size());
+          int roadCount = 0;
+
+          for (const MapNode &node : mapNodes)
+          {
+            const TileData *td = node.getTileData(Layer::BUILDINGS);
+            if (td)
+              buildingTiles.push_back(td);
+            if (node.isLayerOccupied(Layer::ROAD))
+              ++roadCount;
+          }
+
+          CityIndices::instance().tick(buildingTiles, roadCount, static_cast<int>(mapNodes.size()));
+          return false;
+        },
+        30 * GameClock::GameDay,
+        30 * GameClock::GameDay);
+  }
 
   // GameLoop
   while (!m_shutDown)

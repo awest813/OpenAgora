@@ -6,5 +6,5 @@
   "governance_layer":       false,
   "event_system":           false,
   "council_checkpoint":     false,
-  "city_indices_dashboard": false
+  "city_indices_dashboard": true
 }

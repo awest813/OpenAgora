@@ -21,6 +21,7 @@ set(SOURCE_FILES
         services/ResourceManager.{hxx,cxx}
         services/ResourceManager.inl.hxx
         services/FeatureFlags.{hxx,cxx}
+        simulation/CityIndices.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}
@@ -58,6 +59,7 @@ set(SOURCE_FILES
         game/ui/LoadMenu.{hxx,cxx}
         game/ui/BuildMenu.{hxx,cxx}
         game/ui/GameTimeMenu.{hxx,cxx}
+        game/ui/CityIndicesPanel.{hxx,cxx}
         )
 
 if (ANDROID)
@@ -161,6 +163,7 @@ target_include_directories(
         engine/ui/widgets
         engine/ui/menuGroups
         util
+        simulation
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE ${_compile_definitions})
 target_link_libraries(
