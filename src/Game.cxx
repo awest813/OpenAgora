@@ -13,7 +13,9 @@
 #include "../game/ui/BuildMenu.hxx"
 #include "../game/ui/GameTimeMenu.hxx"
 #include "../game/ui/CityIndicesPanel.hxx"
+#include "../game/ui/GovernancePanel.hxx"
 #include <CityIndices.hxx>
+#include <GovernanceSystem.hxx>
 #include "services/FeatureFlags.hxx"
 #include "engine/GameObjects/MapNode.hxx"
 #include "engine/common/enums.hxx"
@@ -95,6 +97,8 @@ void Game::run(bool SkipMenu)
   uiManager.init();
 
   GameClock &gameClock = GameClock::instance();
+  FeatureFlags::instance().readFile();
+  const FeatureFlags &featureFlags = FeatureFlags::instance();
 
 #ifdef USE_ANGELSCRIPT
   ScriptEngine &scriptEngine = ScriptEngine::instance();
@@ -147,13 +151,32 @@ void Game::run(bool SkipMenu)
   uiManager.addPersistentMenu<GameTimeMenu>();
   uiManager.addPersistentMenu<BuildMenu>();
 
-  if (FeatureFlags::instance().cityIndicesDashboard())
+  const bool governanceEnabled = featureFlags.governanceLayer();
+  const bool needsCityIndices = featureFlags.cityIndicesDashboard() || governanceEnabled;
+
+  if (featureFlags.cityIndicesDashboard())
   {
     uiManager.addPersistentMenu<CityIndicesPanel>();
+  }
 
+  if (governanceEnabled)
+  {
+    GovernanceSystem::instance().configure(featureFlags.governanceCheckpointMonths(),
+                                           featureFlags.governanceConstraintThreshold(),
+                                           featureFlags.governanceEventThreshold(),
+                                           featureFlags.governanceSoftFailThreshold(),
+                                           featureFlags.governancePolicyLockMonths(), featureFlags.eventSystem(),
+                                           featureFlags.councilCheckpoint());
+    GovernanceSystem::instance().loadEventDefinitions();
+    GovernanceSystem::instance().reset();
+    uiManager.addPersistentMenu<GovernancePanel>();
+  }
+
+  if (needsCityIndices)
+  {
     // Tick CityIndices every in-game month (30 game days).
     gameClock.addGameTimeClockTask(
-        []() -> bool
+        [governanceEnabled]() -> bool
         {
           if (!MapFunctions::instance().getMap())
             return false;
@@ -173,6 +196,10 @@ void Game::run(bool SkipMenu)
           }
 
           CityIndices::instance().tick(buildingTiles, roadCount, static_cast<int>(mapNodes.size()));
+          if (governanceEnabled)
+          {
+            GovernanceSystem::instance().tickMonth(CityIndices::instance().current());
+          }
           return false;
         },
         30 * GameClock::GameDay,
@@ -236,12 +263,14 @@ void Game::newGame(bool generateTerrain)
 {
   MapFunctions::instance().newMap(generateTerrain);
   m_GamePlay.resetManagers();
+  GovernanceSystem::instance().reset();
 }
 
 void Game::loadGame(const std::string &fileName)
 {
   MapFunctions::instance().loadMapFromFile(fileName);
   m_GamePlay.resetManagers();
+  GovernanceSystem::instance().reset();
 }
 
 } // namespace Cytopia

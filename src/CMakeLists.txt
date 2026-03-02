@@ -22,6 +22,7 @@ set(SOURCE_FILES
         services/ResourceManager.inl.hxx
         services/FeatureFlags.{hxx,cxx}
         simulation/CityIndices.{hxx,cxx}
+        simulation/GovernanceSystem.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}
@@ -60,6 +61,7 @@ set(SOURCE_FILES
         game/ui/BuildMenu.{hxx,cxx}
         game/ui/GameTimeMenu.{hxx,cxx}
         game/ui/CityIndicesPanel.{hxx,cxx}
+        game/ui/GovernancePanel.{hxx,cxx}
         )
 
 if (ANDROID)

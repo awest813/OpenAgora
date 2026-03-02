@@ -51,6 +51,21 @@ public:
   /// City indices dashboard panel (affordability, safety, jobs, commute, pollution).
   bool cityIndicesDashboard() const { return m_cityIndicesDashboard; }
 
+  /// Governance checkpoint interval in in-game months.
+  int governanceCheckpointMonths() const { return m_governanceCheckpointMonths; }
+
+  /// Approval threshold below which policy options are constrained.
+  float governanceConstraintThreshold() const { return m_governanceConstraintThreshold; }
+
+  /// Approval threshold below which civic events are evaluated.
+  float governanceEventThreshold() const { return m_governanceEventThreshold; }
+
+  /// Approval threshold below which the player loses re-election (soft fail).
+  float governanceSoftFailThreshold() const { return m_governanceSoftFailThreshold; }
+
+  /// Number of months policy constraints remain after a failed checkpoint.
+  int governancePolicyLockMonths() const { return m_governancePolicyLockMonths; }
+
 private:
   FeatureFlags() = default;
   ~FeatureFlags() = default;
@@ -62,6 +77,12 @@ private:
   bool m_eventSystem          = false;
   bool m_councilCheckpoint    = false;
   bool m_cityIndicesDashboard = false;
+
+  int m_governanceCheckpointMonths = 6;
+  float m_governanceConstraintThreshold = 40.f;
+  float m_governanceEventThreshold = 30.f;
+  float m_governanceSoftFailThreshold = 15.f;
+  int m_governancePolicyLockMonths = 3;
 };
 
 #endif // FEATURE_FLAGS_HXX_
