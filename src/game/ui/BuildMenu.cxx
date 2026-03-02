@@ -1,4 +1,5 @@
 #include "BuildMenu.hxx"
+#include "UITheme.hxx"
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
@@ -141,7 +142,15 @@ template <class Holder> void drawSubmenu(ImVec2 pos, float categoryOffset, const
     {
       if (ui::GetHoveredTimer() > menu->getTooltipDelay())
       {
+        // Styled tooltip using theme colours
+        ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
+        ui::PushStyleVar(ImGuiStyleVar_WindowPadding,  ImVec2(8.f, 6.f));
+        ui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.10f, 0.12f, 0.18f, 0.96f));
+        ui::PushStyleColor(ImGuiCol_Border,  UITheme::COL_BORDER);
+        ui::PushStyleColor(ImGuiCol_Text,    UITheme::COL_TEXT_PRIMARY);
         ui::SetTooltip("%s", btn->getId().c_str());
+        ui::PopStyleColor(3);
+        ui::PopStyleVar(2);
       }
 
       if (deep == 0)

@@ -1,4 +1,5 @@
 #include "PauseMenu.hxx"
+#include "UITheme.hxx"
 
 #include "SettingsMenu.hxx"
 
@@ -12,62 +13,84 @@ namespace ui = ImGui;
 
 void PauseMenu::draw() const
 {
-  ImVec2 windowSize(300, 400);
+  constexpr float winW = 320.f;
+  constexpr float winH = 380.f;
   ImVec2 screenSize = ui::GetIO().DisplaySize;
 
-  // dont remove yet, need for tuning
-  //bool show = true;
-  //ui::ShowDemoWindow(&show);
-
   auto &uiManager = UIManager::instance();
-
   const auto &layout = uiManager.getLayouts()["PauseMenuButtons"];
-  ui::SetNextWindowPos(ImVec2((screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2));
-  ui::SetNextWindowSize(windowSize);
 
-  const ImVec2 buttonSize(200, 40);
-  const ImVec2 buttonOffset((windowSize.x - buttonSize.x) / 2, buttonSize.y / 2);
+  ui::SetNextWindowPos(
+      ImVec2((screenSize.x - winW) * 0.5f, (screenSize.y - winH) * 0.5f));
+  ui::SetNextWindowSize(ImVec2(winW, winH));
 
-  ui::PushFont(layout.font);
-  ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-  ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(buttonOffset.x, 0));
-  ui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, buttonOffset.y));
+  UITheme::pushPanelStyle();
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24.f, 20.f));
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(0.f, 10.f));
 
   bool open = true;
   ui::BeginCt("PauseMenu", &open,
-              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
+              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
                   ImGuiWindowFlags_NoScrollWithMouse);
 
-  ui::Dummy({0.f, (windowSize.y - (buttonSize.y + buttonOffset.y) * 5) / 2});
-  if (ui::ButtonCt("Settings", buttonSize))
+  // ── Header ────────────────────────────────────────────────────────────────
+  ui::PushFont(layout.font);
+
+  {
+    const char *title = "PAUSED";
+    float tw = ui::CalcTextSize(title).x;
+    ui::SetCursorPosX((winW - tw) * 0.5f);
+    ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_ACCENT);
+    ui::TextUnformatted(title);
+    ui::PopStyleColor();
+  }
+  ui::PopFont();
+
+  ui::Spacing();
+  ui::Separator();
+  ui::Spacing();
+
+  // ── Buttons ───────────────────────────────────────────────────────────────
+  UITheme::pushButtonStyle();
+
+  const ImVec2 btnSize(winW - 48.f, 40.f);
+
+  auto centeredButton = [&](const char *label) -> bool {
+    return ui::ButtonCt(label, btnSize);
+  };
+
+  if (centeredButton("Settings"))
   {
     Settings::instance().writeFile();
     uiManager.openMenu<SettingsMenu>();
   }
 
-  if (ui::ButtonCt("New Game", buttonSize))
-  {
+  if (centeredButton("New Game"))
     SignalMediator::instance().signalNewGame.emit(true);
-  }
 
-  if (ui::ButtonCt("Save Game", buttonSize))
-  {
+  if (centeredButton("Save Game"))
     SignalMediator::instance().signalSaveGame.emit("save.cts");
-  }
 
-  if (ui::ButtonCt("Load Game", buttonSize))
-  {
+  if (centeredButton("Load Game"))
     SignalMediator::instance().signalLoadGame.emit("save.cts");
-  }
 
-  if (ui::ButtonCt("Quit Game", buttonSize))
-  {
+  // Divider before destructive action
+  ui::Spacing();
+  ui::Separator();
+  ui::Spacing();
+
+  ui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.10f, 0.10f, 1.f));
+  ui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.75f, 0.15f, 0.15f, 1.f));
+  ui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.45f, 0.08f, 0.08f, 1.f));
+  if (centeredButton("Quit Game"))
     SignalMediator::instance().signalQuitGame.emit();
-  }
+  ui::PopStyleColor(3);
 
-  ui::PopFont();
-  ui::PopStyleVar(4);
+  UITheme::popButtonStyle();
+
+  ImGui::PopStyleVar(2);
+  UITheme::popPanelStyle();
 
   ui::End();
 }

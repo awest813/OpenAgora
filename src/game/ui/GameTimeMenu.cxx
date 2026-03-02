@@ -1,4 +1,5 @@
 #include "GameTimeMenu.hxx"
+#include "UITheme.hxx"
 
 #include "SettingsMenu.hxx"
 
@@ -15,94 +16,83 @@ namespace ui = ImGui;
 void GameTimeMenu::draw() const
 {
   ImVec2 screenSize = ui::GetIO().DisplaySize;
+  auto &uiManager   = UIManager::instance();
 
-  auto &uiManager = UIManager::instance();
+  // Four speed buttons + Pause button
+  const ImVec2 buttonSize(36, 28);
+  const int    spacing   = 4;
+  const int    numBtns   = 4;
+  const float  winW      = (buttonSize.x + spacing) * numBtns + spacing * 2;
+  const float  winH      = buttonSize.y + spacing * 2 + 4;
+  const ImVec2 pos(screenSize.x - winW - 4, 4);
 
-  const auto &layout = uiManager.getLayouts()["BuildMenuButtons"];
-  const ImVec2 buttonSize(32, 32);
-  const int spacing = 8;
-  ImVec2 windowSize((buttonSize.x + spacing) * 4 + spacing, buttonSize.y + spacing * 2);
-  ImVec2 pos(screenSize.x - windowSize.x, 0);
-  const ImRect bb(ImVec2{0, 0}, ImVec2{0, 0} + windowSize);
+  UITheme::pushPanelStyle();
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(spacing, spacing));
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(spacing, 0));
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,  ImVec2(4, 4));
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.f);
 
-  struct
-  {
-    uint8_t clr, frame, frameShade, bottomFrame, bottomFrameShade;
-  } bg;
-  bg = {128, 150, 200, 106, 84};
-
-  const ImVec2 timeFramePos = bb.Min + ImVec2(spacing, spacing);
-
-  ui::PushFont(layout.font);
-  ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-  ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
+  ImGui::PushStyleColor(ImGuiCol_Button,        UITheme::COL_BTN);
+  ImGui::PushStyleColor(ImGuiCol_ButtonHovered, UITheme::COL_BTN_HOVER);
+  ImGui::PushStyleColor(ImGuiCol_ButtonActive,  UITheme::COL_BTN_ACTV);
 
   ui::SetNextWindowPos(pos);
-  ui::SetNextWindowSize(windowSize);
+  ui::SetNextWindowSize(ImVec2(winW, winH));
 
   bool open = true;
   ui::Begin("##gametimemenu", &open,
-            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoDecoration);
 
-  ImGuiWindow *window = ImGui::GetCurrentWindow();
-
-  /*window->DrawList->PathLineTo(window->Pos);
-  window->DrawList->PathLineTo(window->Pos + ImVec2(64, 0));
-  window->DrawList->PathLineTo(window->Pos + ImVec2(windowSize.x / 2, windowSize.y - 64));
-  window->DrawList->PathLineTo(window->Pos + ImVec2(windowSize.x / 2, windowSize.y));
-  window->DrawList->PathLineTo(window->Pos + ImVec2(0, windowSize.y));
-  window->DrawList->PathFillConvex(ImColor{ bg.clr, bg.clr, bg.clr });
-
-  window->DrawList->PathLineTo(window->Pos + ImVec2(windowSize.x / 2, windowSize.y - 64));
-  window->DrawList->PathLineTo(window->Pos + ImVec2(windowSize.x, windowSize.y - 64));
-  window->DrawList->PathLineTo(window->Pos + ImVec2(windowSize.x, windowSize.y));
-  window->DrawList->PathLineTo(window->Pos + ImVec2(windowSize.x / 2, windowSize.y));
-  window->DrawList->PathFillConvex(ImColor{ bg.clr, bg.clr, bg.clr });
-
-  const ImVec2 &wpos = window->Pos + ImVec2(window->WindowBorderSize, window->WindowBorderSize);
-  const ImVec2 upOffset{0, 2};
-  const ImVec2 sideOffset{2, 0};
-  ImColor bgShade{bg.bottomFrameShade, bg.bottomFrameShade, bg.bottomFrameShade};
-  ImColor bgFrame{bg.bottomFrame, bg.bottomFrame, bg.bottomFrame};
-
-  ImVec2 last = wpos;
-  auto borderLine = [&] (auto p, auto c) { window->DrawList->AddLine(last, p, c, 2); last = p; };
-  borderLine(wpos + ImVec2(64, 0), bgShade); // 0-> top left to middle
-  borderLine(wpos + ImVec2(windowSize.x * 2 / 4, windowSize.y - 64), bgFrame); // slop top midle to bottom middle 
-  borderLine(wpos + ImVec2(windowSize.x, windowSize.y - 64) - sideOffset * 2, bgFrame); // -> line bottom middle to rigth side
-  borderLine(wpos + ImVec2(windowSize.x, windowSize.y) - (sideOffset + upOffset) * 2, bgFrame); // | rigth side to rbottom corner
-  borderLine(wpos + ImVec2(0, windowSize.y) - upOffset * 2, bgShade); // <- bottom line to left side
-  borderLine(wpos, bgShade); // |0  left line to left top corner */
-
-  ui::SetCursorPos(timeFramePos);
   const float speedFactor = GameClock::instance().getGameClockSpeed();
-  auto is_interval = [&](float val) { return fabs(speedFactor - val) < 0.1f ? ImGuiButtonFlags_ForcePressed : 0; };
-  if (ui::ButtonCtEx("||", buttonSize, is_interval(0.f)))
+
+  struct SpeedBtn
   {
-    GameClock::instance().setGameClockSpeed(0.0f);
+    const char *label;
+    float       speed;
+  };
+
+  constexpr SpeedBtn speeds[] = {
+      {"||", 0.f},
+      {" >", 1.f},
+      {">>", 2.f},
+      {">>|", 8.f},
+  };
+
+  ui::SetCursorPosY(ui::GetCursorPosY() + 2.f);
+  for (int i = 0; i < numBtns; ++i)
+  {
+    bool active = (fabs(speedFactor - speeds[i].speed) < 0.1f);
+
+    if (active)
+    {
+      // Highlighted pressed-state colour for the active speed
+      ui::PushStyleColor(ImGuiCol_Button, UITheme::COL_ACCENT_ACTIVE);
+      ui::PushStyleColor(ImGuiCol_Text,   ImVec4(1.f, 1.f, 1.f, 1.f));
+    }
+    else
+    {
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
+    }
+
+    ImGuiButtonFlags flags = active ? ImGuiButtonFlags_ForcePressed : 0;
+    if (ui::ButtonCtEx(speeds[i].label, buttonSize, flags))
+    {
+      GameClock::instance().setGameClockSpeed(speeds[i].speed);
+    }
+
+    if (active)
+      ui::PopStyleColor(2);
+    else
+      ui::PopStyleColor(1);
+
+    if (i < numBtns - 1)
+      ui::SameLine(0, spacing);
   }
 
-  ui::SameLine(0, spacing);
-  if (ui::ButtonCtEx(">", buttonSize, is_interval(1.f)))
-  {
-    GameClock::instance().setGameClockSpeed(1.0f);
-  }
-
-  ui::SameLine(0, spacing);
-  if (ui::ButtonCtEx(">>", buttonSize, is_interval(2.f)))
-  {
-    GameClock::instance().setGameClockSpeed(2.0f);
-  }
-
-  ui::SameLine(0, spacing);
-  if (ui::ButtonCtEx(">>>", buttonSize, is_interval(8.f)))
-  {
-    GameClock::instance().setGameClockSpeed(8.0f);
-  }
-  ui::PopFont();
-  ui::PopStyleVar(3);
+  ImGui::PopStyleColor(3);
+  ImGui::PopStyleVar(4);
+  UITheme::popPanelStyle();
 
   ui::End();
 }
