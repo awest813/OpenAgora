@@ -1,4 +1,5 @@
 #include "GovernancePanel.hxx"
+#include "UITheme.hxx"
 
 #include <GovernanceSystem.hxx>
 #include <PolicyEngine.hxx>
@@ -10,38 +11,22 @@
 
 namespace ui = ImGui;
 
-namespace
-{
-ImVec4 approvalColor(float approval)
-{
-  if (approval >= 66.f)
-    return {0.24f, 0.78f, 0.35f, 1.f};
-  if (approval >= 33.f)
-    return {0.95f, 0.76f, 0.15f, 1.f};
-  return {0.90f, 0.25f, 0.20f, 1.f};
-}
-
-const char *statusLabel(const GovernanceSystem &governance)
-{
-  if (governance.lostElection())
-    return "Soft fail";
-  if (governance.policyConstrained())
-    return "Constrained";
-  return "Stable";
-}
-} // namespace
+// ── draw() ────────────────────────────────────────────────────────────────────
 
 void GovernancePanel::draw() const
 {
   GovernanceSystem &governance = GovernanceSystem::instance();
 
-  constexpr float panelWidth = 300.f;
-  constexpr float panelHeight = 230.f;
-  const ImVec2 panelPos{4.f, 186.f};
+  constexpr float panelWidth  = 260.f;
+  constexpr float panelHeight = 250.f;
+  // sits just below the CityIndicesPanel (which ends at ~218)
+  const ImVec2 panelPos{6.f, 224.f};
+
+  UITheme::pushPanelStyle();
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.f, 5.f));
 
   ui::SetNextWindowPos(panelPos, ImGuiCond_Always);
   ui::SetNextWindowSize({panelWidth, panelHeight}, ImGuiCond_Always);
-  ui::SetNextWindowBgAlpha(0.82f);
 
   const ImGuiWindowFlags panelFlags =
       ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
@@ -51,124 +36,191 @@ void GovernancePanel::draw() const
   if (!ui::Begin("##governance_panel", &open, panelFlags))
   {
     ui::End();
+    ImGui::PopStyleVar();
+    UITheme::popPanelStyle();
     return;
   }
 
-  ui::TextDisabled("Governance");
-  ui::Separator();
+  UITheme::sectionHeader("  Governance");
 
-  ui::Text("Public approval");
-  ui::PushStyleColor(ImGuiCol_PlotHistogram, approvalColor(governance.approval()));
-  char overlay[16];
-  snprintf(overlay, sizeof(overlay), "%.0f / 100", governance.approval());
-  ui::ProgressBar(governance.approval() / 100.f, ImVec2(-1.f, 16.f), overlay);
-  ui::PopStyleColor();
-
-  ui::Text("Status: %s", statusLabel(governance));
-  const int monthsToCheckpoint = governance.monthsUntilCheckpoint();
-  if (monthsToCheckpoint >= 0)
+  // ── Approval bar ──────────────────────────────────────────────────────────
   {
-    ui::Text("Council checkpoint in: %d month%s", monthsToCheckpoint, monthsToCheckpoint == 1 ? "" : "s");
+    float approval = governance.approval();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
+    ui::TextUnformatted("Public Approval");
+    ImGui::PopStyleColor();
+
+    ui::PushStyleColor(ImGuiCol_PlotHistogram, UITheme::statusColor(approval));
+    ui::PushStyleColor(ImGuiCol_FrameBg,       ImVec4(0.15f, 0.18f, 0.24f, 1.f));
+
+    char overlay[20];
+    snprintf(overlay, sizeof(overlay), "%.0f / 100", approval);
+    ui::ProgressBar(approval / 100.f, ImVec2(-1.f, 14.f), overlay);
+    ui::PopStyleColor(2);
   }
 
-  if (governance.lostElection())
+  // ── Status badges ─────────────────────────────────────────────────────────
   {
-    ui::TextColored({0.95f, 0.35f, 0.25f, 1.f}, "You lost re-election. Sandbox continues.");
+    const bool lost        = governance.lostElection();
+    const bool constrained = governance.policyConstrained();
+    const int  months      = governance.monthsUntilCheckpoint();
+
+    ImVec4 statusClr = lost ? UITheme::COL_RED
+                     : constrained ? UITheme::COL_YELLOW
+                                   : UITheme::COL_GREEN;
+
+    const char *statusTxt = lost        ? "Status: Election Lost"
+                          : constrained ? "Status: Constrained"
+                                        : "Status: Stable";
+
+    ui::PushStyleColor(ImGuiCol_Text, statusClr);
+    ui::TextUnformatted(statusTxt);
+    ui::PopStyleColor();
+
+    if (months >= 0)
+    {
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
+      ui::Text("Council checkpoint in: %d month%s", months, months == 1 ? "" : "s");
+      ui::PopStyleColor();
+    }
   }
 
+  ui::Spacing();
   ui::Separator();
-  ui::TextDisabled("Recent events");
+
+  // ── Recent events ─────────────────────────────────────────────────────────
+  ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_HEADER_TEXT);
+  ui::TextUnformatted("Recent Events");
+  ImGui::PopStyleColor();
 
   const auto &notifications = governance.recentNotifications();
   if (notifications.empty())
   {
-    ui::TextDisabled("No civic events yet.");
+    ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_DISABLED);
+    ui::TextUnformatted("  No civic events yet.");
+    ui::PopStyleColor();
   }
   else
   {
-    const int from = std::max(0, static_cast<int>(notifications.size()) - 4);
+    const int from = std::max(0, static_cast<int>(notifications.size()) - 3);
     for (int i = from; i < static_cast<int>(notifications.size()); ++i)
     {
       const GovernanceNotification &note = notifications[i];
-      ui::TextWrapped("M%d: %s", note.month, note.text.c_str());
+
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_ACCENT);
+      ui::Text("M%d", note.month);
+      ui::PopStyleColor();
+
+      ui::SameLine(0.f, 4.f);
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_PRIMARY);
+      ui::TextWrapped("%s", note.text.c_str());
+      ui::PopStyleColor();
     }
   }
 
+  // ── Council checkpoint modal ──────────────────────────────────────────────
   if (governance.checkpointPending())
-  {
     ui::OpenPopup("Council Checkpoint");
-  }
+
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16.f, 14.f));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.f);
+  ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.10f, 0.12f, 0.16f, 0.98f));
 
   if (ui::BeginPopupModal("Council Checkpoint", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
   {
+    UITheme::sectionHeader("Council Checkpoint");
+
     ui::Text("Approval rating: %.0f / 100", governance.approval());
-    ui::Separator();
+
+    ui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_HEADER_TEXT);
+    ui::TextUnformatted("City Performance");
+    ImGui::PopStyleColor();
 
     const CityIndicesData &indices = governance.lastIndices();
-    ui::BulletText("Affordability: %.0f", indices.affordability);
-    ui::BulletText("Safety: %.0f", indices.safety);
-    ui::BulletText("Jobs/Economy: %.0f", indices.jobs);
-    ui::BulletText("Commute: %.0f", indices.commute);
-    ui::BulletText("Pollution: %.0f", indices.pollution);
+    const struct { const char *n; float v; } stats[] = {
+        {"Affordability", indices.affordability},
+        {"Safety",        indices.safety},
+        {"Jobs / Economy",indices.jobs},
+        {"Commute",       indices.commute},
+        {"Pollution",     indices.pollution},
+    };
+
+    for (const auto &s : stats)
+    {
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::statusColor(s.v));
+      ui::BulletText("%-16s  %.0f", s.n, s.v);
+      ui::PopStyleColor();
+    }
 
     ui::Separator();
-    ui::Text("Policy pledges (choose up to %d):", governance.maxSelectablePolicies());
+    ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_HEADER_TEXT);
+    ui::Text("Policy Pledges  (choose up to %d):", governance.maxSelectablePolicies());
+    ImGui::PopStyleColor();
 
+    UITheme::pushButtonStyle();
     for (const auto &policy : governance.policyOptions())
     {
       bool selected = policy.selected;
       if (!policy.enabled)
-      {
-        ui::PushStyleVar(ImGuiStyleVar_Alpha, ui::GetStyle().Alpha * 0.5f);
-      }
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ui::GetStyle().Alpha * 0.45f);
 
       if (ui::Checkbox(policy.label.c_str(), &selected))
       {
         if (policy.enabled)
-        {
           governance.setPolicySelection(policy.id, selected);
-        }
       }
       if (ui::IsItemHovered())
-      {
         ui::SetTooltip("%s", policy.description.c_str());
-      }
 
       if (!policy.enabled)
-      {
-        ui::PopStyleVar();
-      }
+        ImGui::PopStyleVar();
     }
+    UITheme::popButtonStyle();
 
     ui::Separator();
+
+    // Result banner
     if (governance.lostElection())
     {
-      ui::TextColored({0.95f, 0.35f, 0.25f, 1.f}, "Election lost. Sandbox mode remains active.");
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_RED);
+      ui::TextUnformatted("Election lost. Sandbox mode remains active.");
+      ui::PopStyleColor();
     }
     else if (governance.policyConstrained())
     {
-      ui::TextColored({0.95f, 0.76f, 0.15f, 1.f}, "Low approval: policy options are constrained.");
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_YELLOW);
+      ui::TextUnformatted("Low approval: policy options are constrained.");
+      ui::PopStyleColor();
     }
     else
     {
-      ui::TextColored({0.24f, 0.78f, 0.35f, 1.f}, "Re-election secured.");
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_GREEN);
+      ui::TextUnformatted("Re-election secured.");
+      ui::PopStyleColor();
     }
 
-    if (ui::Button("Continue", ImVec2(220.f, 0.f)))
+    ui::Spacing();
+    UITheme::pushButtonStyle();
+    if (ui::Button("Continue", ImVec2(240.f, 0.f)))
     {
-      // Sync selected policy pledges with the PolicyEngine before dismissing.
       PolicyEngine &policyEngine = PolicyEngine::instance();
       for (const auto &policy : governance.policyOptions())
-      {
         policyEngine.setActive(policy.id, policy.selected);
-      }
 
       governance.acknowledgeCheckpoint();
       ui::CloseCurrentPopup();
     }
+    UITheme::popButtonStyle();
 
     ui::EndPopup();
   }
 
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar(2);
+
   ui::End();
+  ImGui::PopStyleVar();
+  UITheme::popPanelStyle();
 }

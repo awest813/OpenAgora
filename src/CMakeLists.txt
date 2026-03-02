@@ -64,6 +64,7 @@ set(SOURCE_FILES
         game/ui/GameTimeMenu.{hxx,cxx}
         game/ui/CityIndicesPanel.{hxx,cxx}
         game/ui/GovernancePanel.{hxx,cxx}
+        game/ui/UITheme.hxx
         )
 
 if (ANDROID)

@@ -1,4 +1,5 @@
 #include "SettingsMenu.hxx"
+#include "UITheme.hxx"
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
@@ -15,64 +16,82 @@
 namespace ui = ImGui;
 
 SettingsMenu::SettingsMenu() {}
+SettingsMenu::~SettingsMenu() {}
+
+// Helper: draws a left-aligned label, then advances the cursor to a fixed
+// right-column position so all widgets are aligned.
+static void settingsLabel(const char *label, float rightCol)
+{
+  ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
+  ui::TextUnformatted(label);
+  ui::PopStyleColor();
+  ui::SameLine(rightCol);
+}
 
 void SettingsMenu::draw() const
 {
-  ImVec2 windowSize(600, 600);
+  constexpr float winW = 560.f;
+  constexpr float winH = 520.f;
   ImVec2 screenSize = ui::GetIO().DisplaySize;
 
-  // dont remove yet, need for tuning
-  //bool show = true;
-  //ui::ShowDemoWindow(&show);
-
   auto &uiManager = UIManager::instance();
-  auto &settings = Settings::instance();
+  auto &settings  = Settings::instance();
 
   const auto &layout = uiManager.getLayouts()["PauseMenuButtons"];
-  ui::SetNextWindowPos(ImVec2((screenSize.x - windowSize.x) / 2, (screenSize.y - windowSize.y) / 2));
-  ui::SetNextWindowSize(windowSize);
 
-  const ImVec2 buttonSize(200, 40);
-  const ImVec2 buttonOffset((windowSize.x - buttonSize.x) / 2, buttonSize.y / 2);
-  const ImVec2 widgetSize((windowSize.x / 2) - 8, 20);
+  ui::SetNextWindowPos(
+      ImVec2((screenSize.x - winW) * 0.5f, (screenSize.y - winH) * 0.5f));
+  ui::SetNextWindowSize(ImVec2(winW, winH));
 
-  ui::PushFont(layout.font);
-  ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-  //ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(buttonOffset.x, 0));
-  ui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, buttonOffset.y));
+  UITheme::pushPanelStyle();
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24.f, 20.f));
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(0.f, 12.f));
 
   bool open = true;
-  ui::BeginCt("PauseMenu", &open,
-              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
+  ui::BeginCt("SettingsMenu", &open,
+              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
                   ImGuiWindowFlags_NoScrollWithMouse);
 
-  // empty header
-  ui::Dummy({0.f, buttonSize.y});
-  ui::PushItemWidth(widgetSize.x);
-
-  // header label
+  // ── Header ────────────────────────────────────────────────────────────────
+  ui::PushFont(layout.font);
   {
-    auto textWidth = ImGui::CalcTextSize("Settings").x;
-    ImGui::SetCursorPosX((windowSize.x - textWidth) * 0.5f);
-    ui::LabelText("##settingslbl", "Settings");
+    const char *title = "SETTINGS";
+    float tw = ui::CalcTextSize(title).x;
+    ui::SetCursorPosX((winW - tw) * 0.5f);
+    ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_ACCENT);
+    ui::TextUnformatted(title);
+    ui::PopStyleColor();
   }
+  ui::PopFont();
 
-  // vsync label + checkbox
+  ui::Spacing();
+  ui::Separator();
+  ui::Spacing();
+
+  // ── Sections ──────────────────────────────────────────────────────────────
+  constexpr float rightCol  = 250.f;
+  constexpr float widgetW   = winW - rightCol - 24.f;
+
+  ui::PushItemWidth(widgetW);
+  UITheme::pushButtonStyle();
+
+  // ── Display ───────────────────────────────────────────────────────────────
+  UITheme::sectionHeader("Display");
+
+  // VSync
   {
-    ui::LabelText("##vsynclbl", "Enable VSync");
-    ui::SameLine();
+    settingsLabel("Enable VSync", rightCol);
     ui::CheckboxCt("##vsync", &settings.vSync);
   }
 
-  // sceen mode label + combobox
+  // Screen mode
   {
-    ui::LabelText("##fullscreenmodelbl", "Screen Mode");
-    ui::SameLine();
-    std::vector<std::string> modes = {"WINDOWED", "BORDERLESS", "FULLSCREEN"};
-    if (ui::BeginComboCt("##fullcreenmmode", modes[settings.fullScreenMode].c_str()))
+    settingsLabel("Screen Mode", rightCol);
+    const std::vector<std::string> modes = {"Windowed", "Borderless", "Fullscreen"};
+    if (ui::BeginComboCt("##fullscreenmode", modes[settings.fullScreenMode].c_str()))
     {
-      for (int i = 0; i < modes.size(); ++i)
+      for (int i = 0; i < static_cast<int>(modes.size()); ++i)
       {
         const bool is_selected = (settings.fullScreenMode == i);
         if (ui::Selectable(modes[i].c_str(), is_selected))
@@ -87,21 +106,20 @@ void SettingsMenu::draw() const
     }
   }
 
-  // screen resolution label + combobox
+  // Resolution
   {
-    ui::LabelText("##screenreslbl", "Resolution");
-    ui::SameLine();
-    std::string currentResolution = std::to_string(settings.screenWidth) + " x " + std::to_string(settings.screenHeight);
-    if (ui::BeginComboCt("##screenres", currentResolution.c_str()))
+    settingsLabel("Resolution", rightCol);
+    std::string curRes = std::to_string(settings.screenWidth) + " x " + std::to_string(settings.screenHeight);
+    if (ui::BeginComboCt("##screenres", curRes.c_str()))
     {
       for (const auto &mode : WindowManager::instance().getSupportedScreenResolutions())
       {
-        std::string resolution = std::to_string(mode->w) + " x " + std::to_string(mode->h);
+        std::string res = std::to_string(mode->w) + " x " + std::to_string(mode->h);
         const bool is_selected = (settings.screenHeight == mode->h && settings.screenWidth == mode->w);
-        if (ui::Selectable(resolution.c_str(), is_selected))
+        if (ui::Selectable(res.c_str(), is_selected))
         {
           WindowManager::instance().setScreenResolution(
-              (int)(&mode - &WindowManager::instance().getSupportedScreenResolutions().front()));
+              static_cast<int>(&mode - &WindowManager::instance().getSupportedScreenResolutions().front()));
           MapFunctions::instance().refreshVisibleMap();
         }
         if (is_selected)
@@ -111,24 +129,26 @@ void SettingsMenu::draw() const
     }
   }
 
-  // menu layout label + combobox
+  ui::Spacing();
+
+  // ── Interface ─────────────────────────────────────────────────────────────
+  UITheme::sectionHeader("Interface");
+
+  // Build menu position
   {
-    ui::LabelText("##menulayoutlbl", "Build Menu Pos");
-    ui::SameLine();
-    int buildMenuLayoutIdx = (int)uiManager.buildMenuLayout();
-    std::vector<const char *> layouts = {"LEFT", "RIGHT", "TOP", "BOTTOM"};
-    if (ui::BeginComboCt("##menulayoutcombo", layouts[buildMenuLayoutIdx]))
+    settingsLabel("Build Menu Position", rightCol);
+    int buildMenuIdx = static_cast<int>(uiManager.buildMenuLayout());
+    const std::vector<const char *> layouts = {"Left", "Right", "Top", "Bottom"};
+    if (ui::BeginComboCt("##menulayout", layouts[buildMenuIdx]))
     {
-      for (size_t n = 0, size = layouts.size(); n < size; n++)
+      for (size_t n = 0; n < layouts.size(); ++n)
       {
-        const bool is_selected = (buildMenuLayoutIdx == n);
+        const bool is_selected = (buildMenuIdx == static_cast<int>(n));
         if (ui::Selectable(layouts[n], is_selected))
         {
           settings.buildMenuPosition = layouts[n];
           uiManager.setBuildMenuLayout(static_cast<BUILDMENU_LAYOUT>(n));
         }
-
-        // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
         if (is_selected)
           ui::SetItemDefaultFocus();
       }
@@ -136,14 +156,20 @@ void SettingsMenu::draw() const
     }
   }
 
-  // music volume label + slider
-  {
-    ui::LabelText("##musicvol", "Music Volume");
-    ui::SameLine();
-    float saveVolume = settings.musicVolume;
-    ui::SliderFloatCt(" ", &settings.musicVolume, 0, 1, "", ImGuiSliderFlags_NoText);
+  ui::Spacing();
 
-    if (saveVolume != settings.musicVolume)
+  // ── Audio ─────────────────────────────────────────────────────────────────
+  UITheme::sectionHeader("Audio");
+
+  // Music volume
+  {
+    settingsLabel("Music Volume", rightCol);
+    float saveVol = settings.musicVolume;
+    ui::PushStyleColor(ImGuiCol_SliderGrab,        UITheme::COL_ACCENT);
+    ui::PushStyleColor(ImGuiCol_SliderGrabActive,  UITheme::COL_ACCENT_ACTIVE);
+    ui::SliderFloatCt("##musicvol", &settings.musicVolume, 0.f, 1.f, "", ImGuiSliderFlags_NoText);
+    ui::PopStyleColor(2);
+    if (saveVol != settings.musicVolume)
     {
 #ifdef USE_AUDIO
       AudioMixer::instance().setMusicVolume(settings.musicVolume);
@@ -151,48 +177,54 @@ void SettingsMenu::draw() const
     }
   }
 
-  //sfx volume label + slider
-  ui::LabelText("##sfxvol", "Sound FX Volume");
-  ui::SameLine();
-  float saveSFXVolume = settings.soundEffectsVolume;
-  ui::SliderFloatCt("sfx", &settings.soundEffectsVolume, 0, 1, "", ImGuiSliderFlags_NoText);
-
-  if (saveSFXVolume != settings.soundEffectsVolume)
+  // SFX volume
   {
+    settingsLabel("Sound FX Volume", rightCol);
+    float saveSFX = settings.soundEffectsVolume;
+    ui::PushStyleColor(ImGuiCol_SliderGrab,       UITheme::COL_ACCENT);
+    ui::PushStyleColor(ImGuiCol_SliderGrabActive, UITheme::COL_ACCENT_ACTIVE);
+    ui::SliderFloatCt("##sfxvol", &settings.soundEffectsVolume, 0.f, 1.f, "", ImGuiSliderFlags_NoText);
+    ui::PopStyleColor(2);
+    if (saveSFX != settings.soundEffectsVolume)
+    {
 #ifdef USE_AUDIO
-    AudioMixer::instance().setSoundEffectVolume(settings.soundEffectsVolume);
+      AudioMixer::instance().setSoundEffectVolume(settings.soundEffectsVolume);
 #endif
+    }
   }
 
   ui::PopItemWidth();
 
-  ImVec2 btnSize(windowSize.x / 4, 40);
+  // ── Footer buttons ────────────────────────────────────────────────────────
+  const float btnY  = winH - 70.f;
+  const float btnW  = 130.f;
+  const float gap   = 10.f;
+  const float totalW = btnW * 3 + gap * 2;
+  const float startX = (winW - totalW) * 0.5f;
 
-  ui::SetCursorPosY(windowSize.y - btnSize.y * 2);
-  ui::Dummy({btnSize.x / 2, 0.f});
-  ui::SameLine();
-  if (ui::ButtonCt("OK", btnSize))
-  {
+  ui::SetCursorPos(ImVec2(startX, btnY));
+
+  if (ui::ButtonCt("OK", ImVec2(btnW, 40.f)))
     uiManager.closeMenu();
-  }
 
-  ui::SameLine();
-  if (ui::ButtonCt("Cancel", btnSize))
-  {
+  ui::SameLine(0.f, gap);
+  if (ui::ButtonCt("Cancel", ImVec2(btnW, 40.f)))
     uiManager.closeMenu();
-  }
 
-  ui::SameLine();
-  if (ui::ButtonCt("Reset", btnSize))
+  ui::SameLine(0.f, gap);
+  ui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.35f, 0.25f, 0.08f, 1.f));
+  ui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.55f, 0.38f, 0.10f, 1.f));
+  ui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.28f, 0.18f, 0.05f, 1.f));
+  if (ui::ButtonCt("Reset", ImVec2(btnW, 40.f)))
   {
     uiManager.closeMenu();
     Settings::instance().resetSettingsToDefaults();
   }
+  ui::PopStyleColor(3);
 
-  ui::PopFont();
-  ui::PopStyleVar(3);
+  UITheme::popButtonStyle();
+  ImGui::PopStyleVar(2);
+  UITheme::popPanelStyle();
 
   ui::End();
 }
-
-SettingsMenu::~SettingsMenu() {}
