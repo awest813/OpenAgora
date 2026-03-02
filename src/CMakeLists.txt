@@ -23,6 +23,8 @@ set(SOURCE_FILES
         services/FeatureFlags.{hxx,cxx}
         simulation/CityIndices.{hxx,cxx}
         simulation/GovernanceSystem.{hxx,cxx}
+        simulation/AffordabilityModel.{hxx,cxx}
+        simulation/PolicyEngine.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}

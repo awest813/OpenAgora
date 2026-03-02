@@ -39,6 +39,14 @@ public:
   const CityIndicesData &current()  const { return m_current; }
   const CityIndicesData &previous() const { return m_previous; }
 
+  /**
+   * @brief Override the affordability field in the current snapshot.
+   *
+   * Called by GamePlay when AffordabilityModel provides a more accurate
+   * affordability index than the density-only heuristic in tick().
+   */
+  void overrideAffordability(float value) { m_current.affordability = clamp100(value); }
+
 private:
   CityIndices() = default;
 

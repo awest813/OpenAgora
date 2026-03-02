@@ -30,6 +30,9 @@ LIST(APPEND TEST_SOURCES
         engine/WindowManager.cxx
         game/PowerManager.cxx
         simulation/GovernanceSystem.cxx
+        simulation/CityIndices.cxx
+        simulation/AffordabilityModel.cxx
+        simulation/PolicyEngine.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx
