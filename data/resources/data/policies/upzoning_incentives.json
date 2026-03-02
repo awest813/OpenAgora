@@ -1,0 +1,12 @@
+{
+  "id": "upzoning_incentives",
+  "label": "Upzoning Incentives",
+  "description": "Allows higher-density residential development. Increases housing supply but may spike land value and push up rents in the short term.",
+  "type": "zone_modifier",
+  "cost_per_month": 0,
+  "effects": [
+    { "target": "zoneDensityGrowthRate", "op": "multiply", "value": 1.4  },
+    { "target": "landValueProxy",        "op": "multiply", "value": 1.15 }
+  ],
+  "ui_slider": { "min": 0, "max": 1, "step": 1 }
+}

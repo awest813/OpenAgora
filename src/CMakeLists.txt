@@ -20,6 +20,7 @@ set(SOURCE_FILES
         services/GameClock.inl.hxx
         services/ResourceManager.{hxx,cxx}
         services/ResourceManager.inl.hxx
+        services/FeatureFlags.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}

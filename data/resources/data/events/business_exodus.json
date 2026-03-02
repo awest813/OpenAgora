@@ -1,0 +1,11 @@
+{
+  "id": "business_exodus",
+  "trigger": { "index": "jobsIndex", "op": "lt", "value": 25 },
+  "cooldown_months": 12,
+  "notification": "Several major employers have relocated to neighbouring cities due to a poor business environment.",
+  "effects": [
+    { "target": "taxEfficiency",   "op": "multiply", "value": 0.90 },
+    { "target": "publicTrust",     "op": "add",      "value": -10.0 },
+    { "target": "medianIncome",    "op": "multiply", "value": 0.95 }
+  ]
+}

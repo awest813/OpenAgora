@@ -1,0 +1,10 @@
+{
+  "_comment": "Feature flags for in-development systems. Keep all values 'false' on main. Set to 'true' locally to test a system before it is ready to ship.",
+  "affordability_system":   false,
+  "heatmap_overlay":        false,
+  "json_content_pipeline":  false,
+  "governance_layer":       false,
+  "event_system":           false,
+  "council_checkpoint":     false,
+  "city_indices_dashboard": false
+}
