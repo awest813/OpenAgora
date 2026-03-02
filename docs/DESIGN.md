@@ -80,15 +80,15 @@ The goal is to make *simulation logic* independent of SDL so it can:
 ┌────────────────────▼────────────────────────────────────┐
 │  Gameplay Layer                                         │
 │  src/game/                                              │
-│  ZoneManager, PowerManager, GovernanceManager           │
+│  ZoneManager, PowerManager, GamePlay (monthly tick)     │
 │  Orchestrates simulation modules per game-tick          │
 └────────────────────┬────────────────────────────────────┘
                      │ calls tick(), reads TileData
 ┌────────────────────▼────────────────────────────────────┐
-│  Simulation Layer  (NEW)                                │
+│  Simulation Layer  (implemented)                        │
 │  src/simulation/                                        │
 │  CityIndices, AffordabilityModel, PolicyEngine,         │
-│  EventEngine – pure C++17, no SDL headers               │
+│  GovernanceSystem – pure C++17, no SDL headers          │
 └────────────────────┬────────────────────────────────────┘
                      │ reads from
 ┌────────────────────▼────────────────────────────────────┐
@@ -101,18 +101,19 @@ The goal is to make *simulation logic* independent of SDL so it can:
 
 ### 2.2 New module inventory
 
-| Module | Location | Responsibility |
-|--------|----------|---------------|
-| `FeatureFlags` | `src/services/` | Load `FeatureFlags.json`; gate in-dev systems |
-| `CityIndices` | `src/simulation/` | Aggregate tile attributes → five scalar indices |
-| `AffordabilityModel` | `src/simulation/` | Rent/income model, displacement pressure |
-| `PolicyEngine` | `src/simulation/` | Load policy JSON; apply effects each tick |
-| `EventEngine` | `src/simulation/` | Evaluate trigger conditions; fire events |
-| `GovernanceManager` | `src/game/` | Public trust, council checkpoints, soft-fail |
-| `CityIndicesPanel` | `src/game/ui/` | ImGui sidebar for five indices + trend |
-| `PolicyPanel` | `src/game/ui/` | Sliders and toggles per active policy |
-| `NotificationOverlay` | `src/game/ui/` | Toast-style event notifications |
-| `AffordabilityOverlay` | `src/engine/render/` | Per-tile heatmap rendering |
+| Module | Location | Status | Responsibility |
+|--------|----------|--------|---------------|
+| `FeatureFlags` | `src/services/` | ✅ Done | Load `FeatureFlags.json`; gate in-dev systems |
+| `CityIndices` | `src/simulation/` | ✅ Done | Aggregate tile attributes → five scalar indices |
+| `AffordabilityModel` | `src/simulation/` | ✅ Done | Rent/income model, displacement pressure |
+| `PolicyEngine` | `src/simulation/` | ✅ Done | Load policy JSON; apply effects each tick |
+| `GovernanceSystem` | `src/simulation/` | ✅ Done | Public trust, events, council checkpoints, soft-fail |
+| `GamePlay` (monthly tick) | `src/game/` | ✅ Done | Orchestrates all simulation modules each game-month |
+| `CityIndicesPanel` | `src/game/ui/` | ✅ Done | ImGui sidebar for five indices + trend |
+| `GovernancePanel` | `src/game/ui/` | ✅ Done | Approval bar, event log, council checkpoint modal |
+| `PolicyPanel` | `src/game/ui/` | ⏳ Pending | Sliders and toggles per active policy |
+| `NotificationOverlay` | `src/game/ui/` | ⏳ Pending | Toast-style event notifications |
+| `AffordabilityOverlay` | `src/engine/render/` | ⏳ Pending | Per-tile heatmap rendering |
 
 ### 2.3 New signals
 
@@ -414,11 +415,19 @@ from a neutral baseline. The save version is bumped once per phase.
 Because `src/simulation/` has **no SDL dependency**, tests compile in pure
 C++17 with no display needed. Catch2 is already vendored.
 
-Target test files:
-- `tests/simulation/CityIndices.cxx` – index aggregation math
-- `tests/simulation/AffordabilityModel.cxx` – rent/income/displacement formulas
-- `tests/simulation/PolicyEngine.cxx` – effect application from JSON
-- `tests/simulation/EventEngine.cxx` – trigger evaluation and cooldowns
+Implemented test files:
+- `tests/simulation/CityIndices.cxx` – 6 tests: empty-map defaults, all five index directions ✅
+- `tests/simulation/AffordabilityModel.cxx` – 7 tests: reset, rent/income logic, policy bonus, pressure accumulation, churn, recovery ✅
+- `tests/simulation/PolicyEngine.cxx` – 9 tests: active/inactive, add/multiply/set ops, clamping, multi-policy cost accumulation ✅
+- `tests/simulation/GovernanceSystem.cxx` – 5 tests: weighted approval, checkpoint cadence, policy constraints, soft-fail, event cooldown ✅
+
+All 27 simulation assertions pass. Run with:
+```
+./Cytopia_Tests "[simulation]"
+```
+
+Pending test files:
+- `tests/simulation/AffordabilityChurn.cxx` – integration test: build map, tick until churn, assert inhabitant counts drop
 
 ### 7.2 Integration tests
 
@@ -452,11 +461,15 @@ These supplement the existing project style.
 
 ## 9. Open Questions / Tech Debt
 
-| Question | Priority | Notes |
-|----------|----------|-------|
+| Question | Priority | Status |
+|----------|----------|--------|
 | Isometric coordinate system limits map size scalability | Low | Current 128×128 is fine; profile before changing |
 | `TileManager` is a global singleton accessed everywhere | Medium | Refactor to dependency injection over time |
 | AngelScript bindings are incomplete | Low | Expose new simulation APIs to scripts in Phase 2 |
 | No spatial index on `mapNodes` | Medium | Needed for efficient proximity queries (commute index) |
 | Save format is not versioned yet | High | Add `"version"` field before Phase 1 ships |
 | No CI build for Linux (only local) | High | Add GitHub Actions workflow in Phase 0 |
+| `AffordabilityModel::churnRate()` not wired to `MapNode` inhabitant counts | High | Apply churn in `GamePlay::runMonthlySimulationTick` via `ZoneManager` |
+| `PolicyEngine::tick()` budget cost not connected to a city Budget singleton | Medium | Create `Economy` or `Budget` service in Phase 2 |
+| `GovernanceSystem` approval effects (tax/growth multipliers) not applied | Medium | Create economy integration hooks |
+| `GovernancePanel` policy pledges do not call `PolicyEngine::setActive` | Medium | Wire up pledge selection to PolicyEngine |

@@ -2,7 +2,7 @@
 
 #include "../../src/simulation/GovernanceSystem.hxx"
 
-TEST_CASE("Governance approval is average of city indices", "[simulation][governance]")
+TEST_CASE("Governance approval is weighted average of city indices", "[simulation][governance]")
 {
   GovernanceSystem &governance = GovernanceSystem::instance();
   governance.clearEvents();
@@ -18,7 +18,9 @@ TEST_CASE("Governance approval is average of city indices", "[simulation][govern
 
   governance.tickMonth(indices);
 
-  CHECK(governance.approval() == Approx(60.f));
+  // publicTrust = 0.30*80 + 0.25*70 + 0.20*60 + 0.15*50 + 0.10*(100-40)
+  //             = 24 + 17.5 + 12 + 7.5 + 6 = 67.0
+  CHECK(governance.approval() == Approx(67.f));
 }
 
 TEST_CASE("Council checkpoint triggers on configured cadence", "[simulation][governance]")

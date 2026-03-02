@@ -16,6 +16,8 @@
 #include "../game/ui/GovernancePanel.hxx"
 #include <CityIndices.hxx>
 #include <GovernanceSystem.hxx>
+#include <AffordabilityModel.hxx>
+#include <PolicyEngine.hxx>
 #include "services/FeatureFlags.hxx"
 #include "engine/GameObjects/MapNode.hxx"
 #include "engine/common/enums.hxx"
@@ -152,7 +154,9 @@ void Game::run(bool SkipMenu)
   uiManager.addPersistentMenu<BuildMenu>();
 
   const bool governanceEnabled = featureFlags.governanceLayer();
-  const bool needsCityIndices = featureFlags.cityIndicesDashboard() || governanceEnabled;
+  const bool affordabilityEnabled = featureFlags.affordabilitySystem();
+  const bool jsonPipelineEnabled = featureFlags.jsonContentPipeline();
+  const bool needsCityIndices = featureFlags.cityIndicesDashboard() || governanceEnabled || affordabilityEnabled;
 
   if (featureFlags.cityIndicesDashboard())
   {
@@ -172,34 +176,26 @@ void Game::run(bool SkipMenu)
     uiManager.addPersistentMenu<GovernancePanel>();
   }
 
+  if (affordabilityEnabled)
+  {
+    AffordabilityModel::instance().reset();
+  }
+
+  if (jsonPipelineEnabled)
+  {
+    PolicyEngine::instance().loadPolicies();
+  }
+
   if (needsCityIndices)
   {
-    // Tick CityIndices every in-game month (30 game days).
+    // Tick the full simulation stack every in-game month (30 game days).
     gameClock.addGameTimeClockTask(
-        [governanceEnabled]() -> bool
+        [this]() -> bool
         {
           if (!MapFunctions::instance().getMap())
             return false;
 
-          const auto &mapNodes = MapFunctions::instance().getMapNodes();
-          std::vector<const TileData *> buildingTiles;
-          buildingTiles.reserve(mapNodes.size());
-          int roadCount = 0;
-
-          for (const MapNode &node : mapNodes)
-          {
-            const TileData *td = node.getTileData(Layer::BUILDINGS);
-            if (td)
-              buildingTiles.push_back(td);
-            if (node.isLayerOccupied(Layer::ROAD))
-              ++roadCount;
-          }
-
-          CityIndices::instance().tick(buildingTiles, roadCount, static_cast<int>(mapNodes.size()));
-          if (governanceEnabled)
-          {
-            GovernanceSystem::instance().tickMonth(CityIndices::instance().current());
-          }
+          m_GamePlay.runMonthlySimulationTick(MapFunctions::instance().getMapNodes());
           return false;
         },
         30 * GameClock::GameDay,

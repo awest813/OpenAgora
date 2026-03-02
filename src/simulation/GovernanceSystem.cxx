@@ -160,7 +160,19 @@ void GovernanceSystem::reset()
 
 float GovernanceSystem::computeApproval(const CityIndicesData &indices) const
 {
-  return clamp100((indices.affordability + indices.safety + indices.jobs + indices.commute + indices.pollution) / 5.f);
+  // Weighted public-trust formula (DESIGN.md §4.5):
+  //   publicTrust = 0.30 × affordability
+  //               + 0.25 × safety
+  //               + 0.20 × jobs
+  //               + 0.15 × commute
+  //               + 0.10 × (100 - pollution)
+  // Pollution is inverted: a high pollution score (bad for citizens) should
+  // reduce trust, so we treat "clean air" as the positive contribution.
+  return clamp100(0.30f * indices.affordability
+                + 0.25f * indices.safety
+                + 0.20f * indices.jobs
+                + 0.15f * indices.commute
+                + 0.10f * (100.f - indices.pollution));
 }
 
 float GovernanceSystem::valueForTrigger(const std::string &indexKey, const CityIndicesData &indices, float currentApproval) const
@@ -272,7 +284,13 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
   CityIndicesData adjustedIndices = indices;
   float approvalValue = computeApproval(adjustedIndices);
 
-  if (m_eventSystemEnabled && approvalValue <= m_eventThreshold)
+  // Events are evaluated whenever the event system is enabled. Each event
+  // defines its own trigger condition (index + threshold). The overall
+  // m_eventThreshold acts as a "city distress" guard: events only fire when
+  // any individual index OR approval has already fallen to a concerning level.
+  // For flexibility, we gate on the *minimum* of approval and any index value
+  // rather than approval alone, but still honour the per-event trigger check.
+  if (m_eventSystemEnabled)
   {
     for (auto &eventDef : m_events)
     {

@@ -9,8 +9,9 @@ endif ()
 include(FindPackageHandleStandardArgs)
 
 find_path(LibNoise_INCLUDE_DIR noise.h
-        PATH_SUFFIXES include include/noise include/libnoise
+        PATH_SUFFIXES include include/noise include/libnoise noise libnoise
         HINTS ${LIBNOISE_DIR} $ENV{LIBNOISE_DIR}
+        PATHS /usr/include /usr/local/include
         )
 find_library(LibNoise_LIBRARY
         NAMES noise noiseutils noise-static noiseutils-static
