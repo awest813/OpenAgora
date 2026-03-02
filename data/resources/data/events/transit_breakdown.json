@@ -1,0 +1,11 @@
+{
+  "id": "transit_breakdown",
+  "trigger": { "index": "commuteIndex", "op": "lt", "value": 20 },
+  "cooldown_months": 9,
+  "notification": "Chronic traffic gridlock has caused a public transit breakdown. Commute times have tripled.",
+  "effects": [
+    { "target": "commuteIndex",  "op": "add",      "value": -15.0 },
+    { "target": "publicTrust",   "op": "add",      "value":  -6.0 },
+    { "target": "pollutionIndex","op": "add",      "value":   8.0 }
+  ]
+}
