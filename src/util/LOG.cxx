@@ -41,8 +41,14 @@ LOG::~LOG()
 const std::string LOG::getTimeStamp()
 {
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::tm timeBuf{};
+#ifdef _MSC_VER
+  localtime_s(&timeBuf, &now);
+#else
+  localtime_r(&now, &timeBuf);
+#endif
   char buf[100] = {0};
-  std::strftime(buf, sizeof(buf), "%b %d %H:%M:%S", std::localtime(&now)); // lgtm [cpp/potentially-dangerous-function]
+  std::strftime(buf, sizeof(buf), "%b %d %H:%M:%S", &timeBuf);
   return buf;
 }
 

@@ -25,7 +25,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         ${WARN_AS_ERROR_FLAGS}
 
 
-        /wd4996       # -> disable warning: 'localtime': This function or variable may be unsafe. Consider using localtime_s instead.
+        # /wd4996     # -> no longer needed: localtime replaced with localtime_s
         # /wd4251     # -> disable warning: 'identifier': class 'type' needs to have dll-interface to be used by clients of class 'type2'
         # /wd4592     # -> disable warning: 'identifier': symbol will be dynamically initialized (implementation limitation)
         # /wd4201     # -> disable warning: nonstandard extension used: nameless struct/union (caused by GLM)
