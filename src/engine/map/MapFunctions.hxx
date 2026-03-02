@@ -4,8 +4,8 @@
 // #include "WindowManager.hxx"
 // #include "basics/Point.hxx"
 #include <vector>
+#include <memory>
 #include "../Map.hxx"
-// #include "../../util/Singleton.hxx"
 #include <Singleton.hxx>
 #include <Point.hxx>
 
@@ -13,7 +13,7 @@ class MapFunctions : public Singleton<MapFunctions>
 {
 public:
   MapFunctions();
-  Map *getMap() { return m_map; };
+  Map *getMap() { return m_map.get(); };
 
   /** \brief Change map node height.
   * @param isoCoordinates the Point on the map node to change height.
@@ -165,7 +165,7 @@ public:
   void loadMapFromFile(const std::string &fileName);
 
 private:
-  Map *m_map;
+  std::unique_ptr<Map> m_map;
 
   /** \brief Update the nodes and all affected node with the change.
   * @param nodes vector of coordinates to be updated.

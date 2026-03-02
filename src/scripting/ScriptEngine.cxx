@@ -20,7 +20,7 @@
 #include <string>
 #include <SDL.h>
 
-using namespace std;
+using std::string;
 
 void print(const string &str) { LOG(LOG_INFO) << "[AS] " << str; }
 

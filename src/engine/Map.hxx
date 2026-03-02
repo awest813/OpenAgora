@@ -65,7 +65,7 @@ private:
 
   std::vector<MapNode> mapNodes;
   std::vector<MapNode *> mapNodesInDrawingOrder;
-  Sprite **pMapNodesVisible;
+  std::vector<Sprite *> pMapNodesVisible;
   int m_visibleNodesCount = 0;
   int m_columns;
   int m_rows;
