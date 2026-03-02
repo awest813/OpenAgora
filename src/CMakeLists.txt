@@ -61,6 +61,7 @@ set(SOURCE_FILES
         game/ui/BuildMenu.{hxx,cxx}
         game/ui/GameTimeMenu.{hxx,cxx}
         game/ui/CityIndicesPanel.{hxx,cxx}
+        game/ui/GovernancePanel.{hxx,cxx}
         )
 
 if (ANDROID)

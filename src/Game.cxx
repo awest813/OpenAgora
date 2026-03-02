@@ -13,6 +13,7 @@
 #include "../game/ui/BuildMenu.hxx"
 #include "../game/ui/GameTimeMenu.hxx"
 #include "../game/ui/CityIndicesPanel.hxx"
+#include "../game/ui/GovernancePanel.hxx"
 #include <CityIndices.hxx>
 #include <GovernanceSystem.hxx>
 #include "services/FeatureFlags.hxx"
@@ -168,6 +169,7 @@ void Game::run(bool SkipMenu)
                                            featureFlags.councilCheckpoint());
     GovernanceSystem::instance().loadEventDefinitions();
     GovernanceSystem::instance().reset();
+    uiManager.addPersistentMenu<GovernancePanel>();
   }
 
   if (needsCityIndices)
