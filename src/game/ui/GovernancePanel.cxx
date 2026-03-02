@@ -118,13 +118,15 @@ void GovernancePanel::draw() const
       bool selected = policy.selected;
       if (!policy.enabled)
       {
-        ui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ui::PushStyleVar(ImGuiStyleVar_Alpha, ui::GetStyle().Alpha * 0.5f);
       }
 
       if (ui::Checkbox(policy.label.c_str(), &selected))
       {
-        governance.setPolicySelection(policy.id, selected);
+        if (policy.enabled)
+        {
+          governance.setPolicySelection(policy.id, selected);
+        }
       }
       if (ui::IsItemHovered())
       {
@@ -134,7 +136,6 @@ void GovernancePanel::draw() const
       if (!policy.enabled)
       {
         ui::PopStyleVar();
-        ui::PopItemFlag();
       }
     }
 

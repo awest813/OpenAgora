@@ -29,6 +29,7 @@ LIST(APPEND TEST_SOURCES
         engine/UIManager.cxx
         engine/WindowManager.cxx
         game/PowerManager.cxx
+        simulation/GovernanceSystem.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx
@@ -73,6 +74,7 @@ target_include_directories(
         ${CMAKE_SOURCE_DIR}/src/model
         ${CMAKE_SOURCE_DIR}/src/scripting
         ${CMAKE_SOURCE_DIR}/src/services
+        ${CMAKE_SOURCE_DIR}/src/simulation
         ${CMAKE_SOURCE_DIR}/src/util
 )
 
