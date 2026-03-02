@@ -671,14 +671,8 @@ bool MapFunctions::isClickWithinTile(const SDL_Point &screenCoordinates, Point i
 void MapFunctions::newMap(bool generateTerrain)
 {
   const int mapSize = Settings::instance().mapSize;
-  Map *newMap = new Map(mapSize, mapSize, generateTerrain);
-
-  if (newMap)
-  {
-    delete m_map;
-    m_map = newMap;
-    updateAllNodes();
-  }
+  m_map = std::make_unique<Map>(mapSize, mapSize, generateTerrain);
+  updateAllNodes();
 }
 
 void MapFunctions::loadMapFromFile(const std::string &fileName)
@@ -712,27 +706,24 @@ void MapFunctions::loadMapFromFile(const std::string &fileName)
     throw ConfigurationError(TRACE_INFO "Savegame file " + fileName + "is invalid!");
   }
 
-  Map *map = new Map(columns, rows);
+  auto map = std::make_unique<Map>(columns, rows);
   map->mapNodes.reserve(columns * rows);
 
   for (const auto &it : saveGameJSON["mapNode"].items())
   {
     Point coordinates = json(it.value())["coordinates"].get<Point>();
-    // set coordinates (height) of the map
     map->mapNodes.emplace_back(Point{coordinates.x, coordinates.y, coordinates.z, coordinates.height}, "");
-    // load back mapNodeData (tileIDs, Buildins, ...)
     map->mapNodes.back().setMapNodeData(json(it.value())["mapNodeData"]);
   }
 
-  for (auto &node: map->mapNodes)
+  for (auto &node : map->mapNodes)
   {
-    for (const auto &tile: node.getMapNodeData())
+    for (const auto &tile : node.getMapNodeData())
     {
       node.setTileID(tile.tileID, tile.origCornerPoint);
     }
   }
 
-  // Now put those newly created nodes in correct drawing order
   for (int x = 0; x < columns; x++)
   {
     for (int y = columns - 1; y >= 0; y--)
@@ -741,11 +732,7 @@ void MapFunctions::loadMapFromFile(const std::string &fileName)
     }
   }
 
-  if (map)
-  {
-    delete m_map;
-    m_map = map;
-  }
+  m_map = std::move(map);
   updateAllNodes();
   LOG(LOG_DEBUG) << "Load succesfully: " << CYTOPIA_SAVEGAME_DIR + fileName;
 }

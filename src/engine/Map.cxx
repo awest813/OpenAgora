@@ -66,7 +66,7 @@ NeighborNodesPosition operator++(NeighborNodesPosition &nn, int)
   return res;
 }
 
-Map::Map(int columns, int rows) : pMapNodesVisible(new Sprite *[columns * rows]), m_columns(columns), m_rows(rows)
+Map::Map(int columns, int rows) : pMapNodesVisible(columns * rows, nullptr), m_columns(columns), m_rows(rows)
 {
   // TODO move Random Engine out of map
   randomEngine.seed();
@@ -74,7 +74,7 @@ Map::Map(int columns, int rows) : pMapNodesVisible(new Sprite *[columns * rows])
 }
 
 Map::Map(int columns, int rows, const bool generateTerrain)
-    : pMapNodesVisible(new Sprite *[columns * rows]), m_columns(columns), m_rows(rows)
+    : pMapNodesVisible(columns * rows, nullptr), m_columns(columns), m_rows(rows)
 {
   // TODO move Random Engine out of map
   randomEngine.seed();
@@ -97,7 +97,7 @@ Map::Map(int columns, int rows, const bool generateTerrain)
   }
 }
 
-Map::~Map() { delete[] pMapNodesVisible; }
+Map::~Map() = default;
 
 void Map::renderMap() const
 {
