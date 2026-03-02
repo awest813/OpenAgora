@@ -12,6 +12,7 @@
 
 #include <set>
 #include <queue>
+#include <unordered_set>
 
 MapFunctions::MapFunctions() { SignalMediator::instance().registerCbSaveGame(Signal::slot(this, &MapFunctions::saveMapToFile)); }
 
@@ -145,6 +146,7 @@ void MapFunctions::updateNodeNeighbors(const std::vector<Point> &nodes)
   std::vector<Point> nodesToBeUpdated;
   std::map<int, std::vector<Point>> nodeCache;
   std::queue<Point> updatedNodes;
+  std::unordered_set<Point> nodesToElevateSet;
   std::vector<Point> nodesToElevate;
   std::vector<Point> nodesToDemolish;
 
@@ -165,7 +167,7 @@ void MapFunctions::updateNodeNeighbors(const std::vector<Point> &nodes)
           nodeCache[pHeighChangedNode.toIndex()] = PointFunctions::getNeighbors(pHeighChangedNode, false);
         }
 
-        if (std::find(nodesToElevate.begin(), nodesToElevate.end(), pHeighChangedNode) == nodesToElevate.end())
+        if (nodesToElevateSet.insert(pHeighChangedNode).second)
         {
           nodesToElevate.push_back(pHeighChangedNode);
         }
@@ -181,7 +183,7 @@ void MapFunctions::updateNodeNeighbors(const std::vector<Point> &nodes)
             nodeCache[neighborCoords.toIndex()] = PointFunctions::getNeighbors(neighborCoords, false);
           }
 
-          if (std::find(nodesToElevate.begin(), nodesToElevate.end(), neighborCoords) == nodesToElevate.end())
+          if (nodesToElevateSet.insert(neighborCoords).second)
           {
             nodesToElevate.push_back(neighborCoords);
           }
@@ -199,6 +201,7 @@ void MapFunctions::updateNodeNeighbors(const std::vector<Point> &nodes)
         Point nodeToElevate = nodesToElevate.back();
         nodesToBeUpdated.push_back(nodeToElevate);
         nodesToElevate.pop_back();
+        nodesToElevateSet.erase(nodeToElevate);
 
         if (nodeCache.count(nodeToElevate.toIndex()) == 0)
         {
@@ -615,21 +618,27 @@ bool MapFunctions::isClickWithinTile(const SDL_Point &screenCoordinates, Point i
 
   const auto &node = m_map->mapNodes[isoCoordinate.toIndex()];
   auto pSprite = node.getSprite();
-  std::vector<Layer> layersToGoOver;
 
-  // Layers ordered for hitcheck
+  // Layers ordered for hitcheck — fixed-size array avoids heap allocation.
+  static constexpr Layer defaultLayers[] = {Layer::TERRAIN, Layer::WATER, Layer::UNDERGROUND, Layer::BLUEPRINT};
+
+  const Layer *layersBegin = nullptr;
+  const Layer *layersEnd   = nullptr;
+
   if (layer == Layer::NONE)
   {
-    std::vector<Layer> layersOrdered = {Layer::TERRAIN, Layer::WATER, Layer::UNDERGROUND, Layer::BLUEPRINT};
-    layersToGoOver.insert(layersToGoOver.begin(), layersOrdered.begin(), layersOrdered.end());
+    layersBegin = std::begin(defaultLayers);
+    layersEnd   = std::end(defaultLayers);
   }
   else
   {
-    layersToGoOver.push_back(layer);
+    layersBegin = &layer;
+    layersEnd   = &layer + 1;
   }
 
-  for (const auto &curLayer : layersToGoOver)
+  for (const Layer *it = layersBegin; it != layersEnd; ++it)
   {
+    const Layer curLayer = *it;
     if (!MapLayers::isLayerActive(curLayer))
     {
       continue;

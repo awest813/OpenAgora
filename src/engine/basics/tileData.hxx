@@ -1,6 +1,7 @@
 #ifndef TILEDATA_HXX_
 #define TILEDATA_HXX_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "enums.hxx"

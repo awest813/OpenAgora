@@ -5,6 +5,7 @@
 #include "CityIndices.hxx"
 
 #include <string>
+#include <deque>
 #include <vector>
 
 struct GovernanceEffect
@@ -76,7 +77,7 @@ public:
 
   const CityIndicesData &lastIndices() const { return m_lastIndices; }
   const std::vector<GovernancePolicyOption> &policyOptions() const { return m_policyOptions; }
-  const std::vector<GovernanceNotification> &recentNotifications() const { return m_notifications; }
+  const std::deque<GovernanceNotification> &recentNotifications() const { return m_notifications; }
 
   bool setPolicySelection(const std::string &policyId, bool selected);
   void acknowledgeCheckpoint();
@@ -124,7 +125,7 @@ private:
 
   std::vector<GovernanceEventDefinition> m_events;
   std::vector<GovernancePolicyOption> m_policyOptions;
-  std::vector<GovernanceNotification> m_notifications;
+  std::deque<GovernanceNotification> m_notifications;
 };
 
 #endif // GOVERNANCE_SYSTEM_HXX_
