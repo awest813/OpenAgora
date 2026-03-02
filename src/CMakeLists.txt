@@ -102,7 +102,7 @@ generate_source_groups(${SOURCE_FILES})
 set(MAIN_EXE_SOURCE_FILES "${SOURCE_FILES}" PARENT_SCOPE)
 
 if (MSVC)
-    set(SOURCE_FILES ${SOURCE_FILES} ${CMAKE_SOURCE_DIR}/src/Windows/icon_cytopia.rc)
+    set(SOURCE_FILES ${SOURCE_FILES} ${CMAKE_SOURCE_DIR}/src/windows/icon_cytopia.rc)
 endif ()
 
 if (APPLE)
