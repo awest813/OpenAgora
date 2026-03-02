@@ -1,6 +1,7 @@
 #include "GovernancePanel.hxx"
 
 #include <GovernanceSystem.hxx>
+#include <PolicyEngine.hxx>
 
 #include "imgui.h"
 
@@ -155,6 +156,13 @@ void GovernancePanel::draw() const
 
     if (ui::Button("Continue", ImVec2(220.f, 0.f)))
     {
+      // Sync selected policy pledges with the PolicyEngine before dismissing.
+      PolicyEngine &policyEngine = PolicyEngine::instance();
+      for (const auto &policy : governance.policyOptions())
+      {
+        policyEngine.setActive(policy.id, policy.selected);
+      }
+
       governance.acknowledgeCheckpoint();
       ui::CloseCurrentPopup();
     }

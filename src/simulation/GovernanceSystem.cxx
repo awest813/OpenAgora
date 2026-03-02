@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <deque>
 #include <filesystem>
 #include <sstream>
 
@@ -452,6 +453,6 @@ void GovernanceSystem::pushNotification(const std::string &message)
   m_notifications.push_back({m_totalMonthsElapsed, message});
   if (m_notifications.size() > MAX_NOTIFICATIONS)
   {
-    m_notifications.erase(m_notifications.begin());
+    m_notifications.pop_front();
   }
 }

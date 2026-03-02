@@ -6,6 +6,11 @@
 #include "GameStates.hxx"
 #include "Settings.hxx"
 
+namespace
+{
+constexpr unsigned char MAX_ALPHA = 255;
+}
+
 MapNode::MapNode(Point isoCoordinates, const std::string &terrainID, const std::string &tileID)
     : m_isoCoordinates(std::move(isoCoordinates)), m_sprite{std::make_unique<Sprite>(m_isoCoordinates)},
       m_autotileOrientation(LAYERS_COUNT, TileOrientation::TILE_DEFAULT_ORIENTATION),
@@ -119,8 +124,7 @@ Layer MapNode::getTopMostActiveLayer() const
 
 void MapNode::setNodeTransparency(const float transparencyFactor, const Layer &layer) const
 {
-  // TODO refactoring: Consider replacing magic number (255) with constexpr.
-  unsigned char alpha = (1 - transparencyFactor) * 255;
+  unsigned char alpha = static_cast<unsigned char>((1 - transparencyFactor) * MAX_ALPHA);
   m_sprite->setSpriteTranparencyFactor(layer, alpha);
 }
 
@@ -447,8 +451,6 @@ void MapNode::setMapNodeData(std::vector<MapNodeData> &&mapNodeData)
   // updates the pointers to the tiles, after loading tileIDs from json
   for (auto &it : m_mapNodeData)
   {
-    delete it.tileData;
-
     it.tileData = TileManager::instance().getTileData(it.tileID);
   }
 }
