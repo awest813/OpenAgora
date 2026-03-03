@@ -25,6 +25,7 @@ set(SOURCE_FILES
         simulation/GovernanceSystem.{hxx,cxx}
         simulation/AffordabilityModel.{hxx,cxx}
         simulation/PolicyEngine.{hxx,cxx}
+        simulation/BudgetSystem.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}
@@ -64,6 +65,8 @@ set(SOURCE_FILES
         game/ui/GameTimeMenu.{hxx,cxx}
         game/ui/CityIndicesPanel.{hxx,cxx}
         game/ui/GovernancePanel.{hxx,cxx}
+        game/ui/PolicyPanel.{hxx,cxx}
+        game/ui/NotificationOverlay.{hxx,cxx}
         game/ui/UITheme.hxx
         )
 

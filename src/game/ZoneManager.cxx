@@ -271,3 +271,38 @@ void ZoneManager::reset()
     }
   }
 }
+
+void ZoneManager::applyChurn(float churnFraction)
+{
+  if (churnFraction <= 0.f)
+    return;
+
+  for (auto &area : m_zoneAreas)
+  {
+    if (area.getZone() != +ZoneType::RESIDENTIAL)
+      continue;
+
+    // Collect all occupied nodes in this residential area
+    std::vector<Point> occupied;
+    for (const auto &node : area)
+    {
+      if (node.occupied)
+        occupied.push_back(node.coordinate);
+    }
+
+    if (occupied.empty())
+      continue;
+
+    // Vacate a fraction of the occupied nodes (at least 1 if churn is active)
+    const int toVacate = std::max(1, static_cast<int>(static_cast<float>(occupied.size()) * churnFraction));
+
+    // Randomise which nodes to vacate so the effect spreads across the zone
+    Randomizer::instance().shuffle(occupied.begin(), occupied.end());
+
+    const int count = std::min(toVacate, static_cast<int>(occupied.size()));
+    for (int i = 0; i < count; ++i)
+    {
+      area.setVacancy(occupied[i], true);
+    }
+  }
+}

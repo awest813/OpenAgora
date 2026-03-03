@@ -1,6 +1,7 @@
 #include "GamePlay.hxx"
 
 #include "AffordabilityModel.hxx"
+#include "BudgetSystem.hxx"
 #include "CityIndices.hxx"
 #include "GovernanceSystem.hxx"
 #include "PolicyEngine.hxx"
@@ -82,5 +83,32 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
   if (flags.governanceLayer())
   {
     GovernanceSystem::instance().tickMonth(indices);
+  }
+
+  // ── BudgetSystem ───────────────────────────────────────────────────────────
+  if (flags.budgetSystem())
+  {
+    // Sum inhabitants across all building tiles for tax base
+    int totalInhabitants = 0;
+    for (const auto *tile : buildingTiles)
+      totalInhabitants += tile->inhabitants;
+
+    // Determine policy expenses: run the real tick now (post-affordability)
+    float policyExpenses = 0.f;
+    if (flags.jsonContentPipeline())
+    {
+      AffordabilityState affCopy = AffordabilityModel::instance().state();
+      CityIndicesData idxCopy = indices;
+      policyExpenses = static_cast<float>(PolicyEngine::instance().tick(affCopy, idxCopy));
+    }
+
+    const float approval = flags.governanceLayer() ? GovernanceSystem::instance().approval() : 50.f;
+    BudgetSystem::instance().tick(totalInhabitants, policyExpenses, approval);
+  }
+
+  // ── Population churn ───────────────────────────────────────────────────────
+  if (flags.affordabilitySystem() && AffordabilityModel::instance().populationChurnActive())
+  {
+    m_ZoneManager.applyChurn(AffordabilityModel::instance().churnRate());
   }
 }

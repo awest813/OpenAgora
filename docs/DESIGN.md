@@ -108,11 +108,12 @@ The goal is to make *simulation logic* independent of SDL so it can:
 | `AffordabilityModel` | `src/simulation/` | ✅ Done | Rent/income model, displacement pressure |
 | `PolicyEngine` | `src/simulation/` | ✅ Done | Load policy JSON; apply effects each tick |
 | `GovernanceSystem` | `src/simulation/` | ✅ Done | Public trust, events, council checkpoints, soft-fail |
-| `GamePlay` (monthly tick) | `src/game/` | ✅ Done | Orchestrates all simulation modules each game-month |
+| `BudgetSystem` | `src/simulation/` | ✅ Done | Monthly tax revenue, policy expenses, running balance |
+| `GamePlay` (monthly tick) | `src/game/` | ✅ Done | Orchestrates all simulation modules; applies population churn |
 | `CityIndicesPanel` | `src/game/ui/` | ✅ Done | ImGui sidebar for five indices + trend |
 | `GovernancePanel` | `src/game/ui/` | ✅ Done | Approval bar, event log, council checkpoint modal |
-| `PolicyPanel` | `src/game/ui/` | ⏳ Pending | Sliders and toggles per active policy |
-| `NotificationOverlay` | `src/game/ui/` | ⏳ Pending | Toast-style event notifications |
+| `PolicyPanel` | `src/game/ui/` | ✅ Done | Per-policy toggles with cost display and budget summary |
+| `NotificationOverlay` | `src/game/ui/` | ✅ Done | Toast-style event notifications (8s auto-dismiss) |
 | `AffordabilityOverlay` | `src/engine/render/` | ⏳ Pending | Per-tile heatmap rendering |
 
 ### 2.3 New signals
@@ -420,14 +421,12 @@ Implemented test files:
 - `tests/simulation/AffordabilityModel.cxx` – 7 tests: reset, rent/income logic, policy bonus, pressure accumulation, churn, recovery ✅
 - `tests/simulation/PolicyEngine.cxx` – 9 tests: active/inactive, add/multiply/set ops, clamping, multi-policy cost accumulation ✅
 - `tests/simulation/GovernanceSystem.cxx` – 5 tests: weighted approval, checkpoint cadence, policy constraints, soft-fail, event cooldown ✅
+- `tests/simulation/BudgetSystem.cxx` – 6 tests: reset, tax scaling, approval multipliers, expenses, balance accumulation, history rollover ✅
 
-All 27 simulation assertions pass. Run with:
+All 33 simulation assertions pass. Run with:
 ```
 ./Cytopia_Tests "[simulation]"
 ```
-
-Pending test files:
-- `tests/simulation/AffordabilityChurn.cxx` – integration test: build map, tick until churn, assert inhabitant counts drop
 
 ### 7.2 Integration tests
 
@@ -469,7 +468,7 @@ These supplement the existing project style.
 | No spatial index on `mapNodes` | Medium | Needed for efficient proximity queries (commute index) |
 | Save format is not versioned yet | High | Add `"version"` field before Phase 1 ships |
 | No CI build for Linux (only local) | High | Add GitHub Actions workflow in Phase 0 |
-| `AffordabilityModel::churnRate()` not wired to `MapNode` inhabitant counts | High | Apply churn in `GamePlay::runMonthlySimulationTick` via `ZoneManager` |
-| `PolicyEngine::tick()` budget cost not connected to a city Budget singleton | Medium | Create `Economy` or `Budget` service in Phase 2 |
-| `GovernanceSystem` approval effects (tax/growth multipliers) not applied | Medium | Create economy integration hooks |
-| `GovernancePanel` policy pledges do not call `PolicyEngine::setActive` | Medium | Wire up pledge selection to PolicyEngine |
+| ~~`AffordabilityModel::churnRate()` not wired to `MapNode` inhabitant counts~~ | ~~High~~ | ✅ Fixed: `ZoneManager::applyChurn()` + `GamePlay` integration |
+| ~~`PolicyEngine::tick()` budget cost not connected to a city Budget singleton~~ | ~~Medium~~ | ✅ Fixed: `BudgetSystem` singleton, wired in `GamePlay` |
+| `GovernanceSystem` approval effects (tax/growth multipliers) not applied | Medium | `BudgetSystem` applies approval multiplier to tax revenue; zone growth bonuses pending |
+| ~~`GovernancePanel` policy pledges do not call `PolicyEngine::setActive`~~ | ~~Medium~~ | ✅ Fixed: checkpoint Continue button calls `PolicyEngine::setActive` |
