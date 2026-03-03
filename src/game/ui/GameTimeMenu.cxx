@@ -50,13 +50,14 @@ void GameTimeMenu::draw() const
   {
     const char *label;
     float       speed;
+    const char *tooltip;
   };
 
   constexpr SpeedBtn speeds[] = {
-      {"||", 0.f},
-      {" >", 1.f},
-      {">>", 2.f},
-      {">>|", 8.f},
+      {"||", 0.f, "Pause"},
+      {" >", 1.f, "Normal Speed"},
+      {">>", 2.f, "Fast Speed"},
+      {">>|", 8.f, "Very Fast Speed"},
   };
 
   ui::SetCursorPosY(ui::GetCursorPosY() + 2.f);
@@ -79,6 +80,18 @@ void GameTimeMenu::draw() const
     if (ui::ButtonCtEx(speeds[i].label, buttonSize, flags))
     {
       GameClock::instance().setGameClockSpeed(speeds[i].speed);
+    }
+
+    if (ui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+      ui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.f);
+      ui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 6.f));
+      ui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.10f, 0.12f, 0.18f, 0.96f));
+      ui::PushStyleColor(ImGuiCol_Border, UITheme::COL_BORDER);
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_PRIMARY);
+      ui::SetTooltip("%s", speeds[i].tooltip);
+      ui::PopStyleColor(3);
+      ui::PopStyleVar(2);
     }
 
     if (active)
