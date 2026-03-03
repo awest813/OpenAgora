@@ -14,10 +14,13 @@
 #include "../game/ui/GameTimeMenu.hxx"
 #include "../game/ui/CityIndicesPanel.hxx"
 #include "../game/ui/GovernancePanel.hxx"
+#include "../game/ui/PolicyPanel.hxx"
+#include "../game/ui/NotificationOverlay.hxx"
 #include <CityIndices.hxx>
 #include <GovernanceSystem.hxx>
 #include <AffordabilityModel.hxx>
 #include <PolicyEngine.hxx>
+#include <BudgetSystem.hxx>
 #include "services/FeatureFlags.hxx"
 #include "engine/GameObjects/MapNode.hxx"
 #include "engine/common/enums.hxx"
@@ -186,6 +189,21 @@ void Game::run(bool SkipMenu)
     PolicyEngine::instance().loadPolicies();
   }
 
+  if (featureFlags.policyPanel())
+  {
+    uiManager.addPersistentMenu<PolicyPanel>();
+  }
+
+  if (featureFlags.notificationOverlay())
+  {
+    uiManager.addPersistentMenu<NotificationOverlay>();
+  }
+
+  if (featureFlags.budgetSystem())
+  {
+    BudgetSystem::instance().reset();
+  }
+
   if (needsCityIndices)
   {
     // Tick the full simulation stack every in-game month (30 game days).
@@ -260,6 +278,7 @@ void Game::newGame(bool generateTerrain)
   MapFunctions::instance().newMap(generateTerrain);
   m_GamePlay.resetManagers();
   GovernanceSystem::instance().reset();
+  BudgetSystem::instance().reset();
 }
 
 void Game::loadGame(const std::string &fileName)
@@ -267,6 +286,7 @@ void Game::loadGame(const std::string &fileName)
   MapFunctions::instance().loadMapFromFile(fileName);
   m_GamePlay.resetManagers();
   GovernanceSystem::instance().reset();
+  BudgetSystem::instance().reset();
 }
 
 } // namespace Cytopia

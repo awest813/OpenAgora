@@ -12,6 +12,18 @@ public:
 
   void reset();
 
+  /**
+   * @brief Apply population churn by vacating a fraction of occupied residential zone nodes.
+   *
+   * When AffordabilityModel reports active displacement pressure this is called
+   * from GamePlay::runMonthlySimulationTick() to vacate a fraction of occupied
+   * residential nodes, allowing ZoneManager to respawn (lower-density) buildings
+   * over time.
+   *
+   * @param churnFraction Fraction [0, 1] of occupied residential nodes to vacate this tick.
+   */
+  void applyChurn(float churnFraction);
+
 private:
   /**
    * @brief Spawn Buildings on the gathered tileMap

@@ -31,6 +31,8 @@ public:
    *   - AffordabilityModel (rent/income/displacement) – if flag enabled
    *   - PolicyEngine (apply active policy effects) – if flag enabled
    *   - GovernanceSystem (approval, events, checkpoints) – if flag enabled
+   *   - BudgetSystem (tax revenue, policy expenses) – if flag enabled
+   *   - Population churn via ZoneManager – if affordability flag enabled
    *
    * @param mapNodes The full flat vector of map nodes to query tile data from.
    */

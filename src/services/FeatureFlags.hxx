@@ -51,6 +51,17 @@ public:
   /// City indices dashboard panel (affordability, safety, jobs, commute, pollution).
   bool cityIndicesDashboard() const { return m_cityIndicesDashboard; }
 
+  // ── Phase 3 flags ──────────────────────────────────────────────────────────
+
+  /// Monthly budget tracking: tax revenue, policy expenses, running balance.
+  bool budgetSystem() const { return m_budgetSystem; }
+
+  /// Policy management panel: per-policy toggles with cost display.
+  bool policyPanel() const { return m_policyPanel; }
+
+  /// Toast-style notification overlay for governance events.
+  bool notificationOverlay() const { return m_notificationOverlay; }
+
   /// Governance checkpoint interval in in-game months.
   int governanceCheckpointMonths() const { return m_governanceCheckpointMonths; }
 
@@ -77,6 +88,9 @@ private:
   bool m_eventSystem          = false;
   bool m_councilCheckpoint    = false;
   bool m_cityIndicesDashboard = false;
+  bool m_budgetSystem         = false;
+  bool m_policyPanel          = false;
+  bool m_notificationOverlay  = false;
 
   int m_governanceCheckpointMonths = 6;
   float m_governanceConstraintThreshold = 40.f;

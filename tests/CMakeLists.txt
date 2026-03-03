@@ -33,6 +33,7 @@ LIST(APPEND TEST_SOURCES
         simulation/CityIndices.cxx
         simulation/AffordabilityModel.cxx
         simulation/PolicyEngine.cxx
+        simulation/BudgetSystem.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx

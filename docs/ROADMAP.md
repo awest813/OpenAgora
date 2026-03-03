@@ -10,7 +10,7 @@
 **Engine:** SDL2 + Dear ImGui, C++17, CMake/Conan, libnoise terrain gen  
 **Simulation depth today:** Zone management (RCI), power grids, tile placement, terrain generation,
 city-wide indices, affordability model, policy engine, governance loop with council checkpoints and event system  
-**What's still missing:** Heatmap overlay, displacement-driven population churn on map nodes, economy (budget/tax), Phase 3 IP conversion
+### What's still missing:** Heatmap overlay, economy multipliers (tax/growth modifiers from approval), Phase 3 IP conversion
 
 The data-model hooks are already partially there – `TileData` already carries
 `inhabitants`, `happiness`, `educationLevel`, `pollutionLevel`, `crimeLevel`,
@@ -104,7 +104,7 @@ All balance constants are configurable via `AffordabilityModel::Config`:
 
 **Tests:** `tests/simulation/AffordabilityModel.cxx` – 7 unit tests ✅
 
-### 1.3 Displacement Pressure + Population Churn ✅ (model only)
+### 1.3 Displacement Pressure + Population Churn ✅
 
 When `displacementPressure > churnThreshold (default 60)`:
 - `AffordabilityModel::populationChurnActive()` returns `true`
@@ -115,8 +115,8 @@ Churn rate formula:
 churnRate = (displacementPressure - churnThreshold) / (100 - churnThreshold) * maxChurnPerTick
 ```
 
-**Pending:** Apply `churnRate` to `MapNode` inhabitant counts in `ZoneManager` or `GamePlay`.  
-When displacement is active, a notification should fire via GovernanceSystem. See issue #3.
+Applied each month in `GamePlay::runMonthlySimulationTick()` via `ZoneManager::applyChurn(churnFraction)`,
+which marks a fraction of occupied residential zone nodes as vacant so buildings can respawn at lower density.
 
 ### 1.4 Policy: Affordable Housing Fund ✅
 
@@ -165,7 +165,7 @@ When displacement is active, a notification should fire via GovernanceSystem. Se
 
 **Tests:** `tests/simulation/PolicyEngine.cxx` – 9 unit tests covering active/inactive, add/multiply/set ops, clamping, and cost accumulation ✅
 
-**UI integration:** PolicyPanel with per-policy sliders + cost display – *pending* (see issue #7)
+**UI integration:** PolicyPanel with per-policy toggles + cost display ✅ (see `src/game/ui/PolicyPanel.hxx/.cxx`)
 
 ### 1.7 Heatmap Overlay: Affordability
 
@@ -236,16 +236,39 @@ Three events implemented:
 Events evaluate against all six trigger targets: `affordabilityIndex`, `safetyIndex`, `jobsIndex`,
 `commuteIndex`, `pollutionIndex`, `publicTrust`.
 
-### 2.4 Notification UI ✅ (partial)
+### 2.4 Notification UI ✅
 
 - Recent events list in GovernancePanel sidebar (last 4 events with month stamps) ✅
 - Full log of up to 20 events in `GovernanceSystem::recentNotifications()` ✅
-- Toast-style overlay (bottom-right, auto-dismiss after 8s) – *pending* (see issue #10)
+- Toast-style overlay (bottom-right, auto-dismiss after 8s) ✅ `src/game/ui/NotificationOverlay.hxx/.cxx`
 - Full event log panel from toolbar – *pending*
 
 ### Phase 2 Milestone
 The sim now has a **theme**, not just mechanics. The player manages a city *and* a
 political relationship with its residents.
+
+---
+
+## Phase 2.5 – Economy Foundation
+
+### 2.5 Budget System ✅
+
+**File:** `src/simulation/BudgetSystem.hxx/.cxx`
+
+Tracks monthly city income and expenditure:
+
+- **Tax revenue** = `totalInhabitants × taxRatePerInhabitant × approvalMultiplier`
+  - High approval (>70): ×1.10 revenue bonus
+  - Low approval (<30): ×0.80 revenue penalty
+- **Policy expenses** = sum of `cost_per_month` for all active policies (from PolicyEngine)
+- **Running balance** accumulates across months
+- Rolling 12-month history for trend display
+
+Integrated into `GamePlay::runMonthlySimulationTick()` behind the `budget_system` feature flag.
+
+**Tests:** `tests/simulation/BudgetSystem.cxx` – 6 unit tests covering reset, tax scaling, approval multipliers, expenses, accumulation, and history rollover ✅
+
+**UI integration:** BudgetSystem balance shown in PolicyPanel header ✅
 
 ---
 
@@ -292,12 +315,15 @@ src/
 │   ├── CityIndices.hxx/.cxx           ✅ (29 simulation tests pass)
 │   ├── AffordabilityModel.hxx/.cxx    ✅
 │   ├── GovernanceSystem.hxx/.cxx      ✅
-│   └── PolicyEngine.hxx/.cxx          ✅
+│   ├── PolicyEngine.hxx/.cxx          ✅
+│   └── BudgetSystem.hxx/.cxx          ✅ (6 tests)
 ├── game/           ← existing zone/power managers + new governance
-│   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick orchestration)
+│   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick + churn)
 │   └── ui/         ← ImGui panels
 │       ├── CityIndicesPanel.hxx/.cxx  ✅
-│       └── GovernancePanel.hxx/.cxx   ✅
+│       ├── GovernancePanel.hxx/.cxx   ✅
+│       ├── PolicyPanel.hxx/.cxx       ✅
+│       └── NotificationOverlay.hxx/.cxx ✅
 ├── engine/         ← map, rendering, input (existing)
 ├── render/         ← heatmap overlays, sprite compositing (pending)
 └── services/       ← clock, audio, feature flags
@@ -320,14 +346,14 @@ Policy and event definitions live in JSON. No hardcoded balance numbers in C++.
 |---|-------|--------|
 | 1 | ~~Add City Indices dashboard (affordability, safety, jobs, commute, pollution)~~ ✅ | `simulation`, `ui`, `phase-1` |
 | 2 | ~~Implement affordability index + rent/income model~~ ✅ | `simulation`, `phase-1` |
-| 3 | Displacement pressure → apply population churn to map `MapNode` inhabitants | `simulation`, `phase-1` |
+| 3 | ~~Displacement pressure → apply population churn to map `MapNode` inhabitants~~ ✅ | `simulation`, `phase-1` |
 | 4 | ~~Policy: Affordable Housing Fund (budget → reduces displacement)~~ ✅ | `policy`, `phase-1` |
 | 5 | ~~Policy: Upzoning Incentives (density growth modifier)~~ ✅ | `policy`, `phase-1` |
 | 6 | Heatmap overlay: affordability | `ui`, `phase-1` |
-| 7 | PolicyPanel UI: per-policy sliders + monthly cost display | `ui`, `phase-1` |
+| 7 | ~~PolicyPanel UI: per-policy toggles + monthly cost display~~ ✅ | `ui`, `phase-1` |
 | 8 | ~~Event system: trigger + effect + notification UI~~ ✅ | `simulation`, `ui`, `phase-2` |
-| 9 | Economy system: budget, tax efficiency, growth rate multipliers | `simulation`, `phase-2` |
-| 10 | Toast notification overlay + full event log panel | `ui`, `phase-2` |
+| 9 | ~~Economy system: budget tracking with approval multipliers~~ ✅ | `simulation`, `phase-2` |
+| 10 | ~~Toast notification overlay~~ ✅ / Full event log panel *pending* | `ui`, `phase-2` |
 
 ---
 
