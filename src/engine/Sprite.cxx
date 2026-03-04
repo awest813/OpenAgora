@@ -20,6 +20,16 @@ Sprite::Sprite(Point _isoCoordinates)
   m_screenCoordinates = convertIsoToScreenCoordinates(_isoCoordinates);
 }
 
+namespace
+{
+/// Alpha value applied to non-blueprint layers when in blueprint edit mode (semi-transparent)
+constexpr Uint8 BLUEPRINT_MODE_ALPHA = 80;
+/// Full opacity alpha value used to reset texture alpha after rendering
+constexpr Uint8 FULL_ALPHA = 255;
+/// Full color intensity value used to reset texture color modulation (white) after highlighted rendering
+constexpr Uint8 FULL_COLOR_VALUE = 255;
+} // namespace
+
 void Sprite::render() const
 {
 #ifdef MICROPROFILE_ENABLED
@@ -42,7 +52,7 @@ void Sprite::render() const
       if (GameStates::instance().layerEditMode == LayerEditMode::BLUEPRINT && currentLayer != Layer::BLUEPRINT &&
           currentLayer != Layer::UNDERGROUND)
       {
-        SDL_SetTextureAlphaMod(m_SpriteData[currentLayer].texture, 80);
+        SDL_SetTextureAlphaMod(m_SpriteData[currentLayer].texture, BLUEPRINT_MODE_ALPHA);
       }
       else
       {
@@ -62,10 +72,10 @@ void Sprite::render() const
 
       if (highlightSprite)
       {
-        SDL_SetTextureColorMod(m_SpriteData[currentLayer].texture, 255, 255, 255);
+        SDL_SetTextureColorMod(m_SpriteData[currentLayer].texture, FULL_COLOR_VALUE, FULL_COLOR_VALUE, FULL_COLOR_VALUE);
       }
 
-      SDL_SetTextureAlphaMod(m_SpriteData[currentLayer].texture, 255);
+      SDL_SetTextureAlphaMod(m_SpriteData[currentLayer].texture, FULL_ALPHA);
     }
   }
 }

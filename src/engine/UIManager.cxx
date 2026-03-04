@@ -27,8 +27,6 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_sdlrenderer.h"
 
-#include <Settings.hxx>
-
 #ifdef MICROPROFILE_ENABLED
 #include "microprofile/microprofile.h"
 #endif

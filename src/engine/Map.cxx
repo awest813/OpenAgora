@@ -8,7 +8,6 @@
 #include "common/Constants.hxx"
 #include "map/MapLayers.hxx"
 #include "common/JsonSerialization.hxx"
-#include "common/Constants.hxx"
 #include "Filesystem.hxx"
 #include "../services/Randomizer.hxx"
 #include "../services/FeatureFlags.hxx"

@@ -110,7 +110,7 @@ public:
   /** @brief check the conductivity of the node
     * @returns true if the node conducts electricity/power, false if not
     */
-  const bool isConductive() const;
+  bool isConductive() const;
 
   /**
  * @brief Demolish a node
