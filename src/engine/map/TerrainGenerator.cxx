@@ -15,43 +15,94 @@
 
 using json = nlohmann::json;
 
+namespace
+{
+// Noise module tile scale factor used to convert grid coordinates to noise-space
+constexpr double NOISE_TILE_SCALE = 32.0;
+
+// Terrain height Perlin noise parameters
+constexpr double TERRAIN_HEIGHT_PERLIN_FREQUENCY = 0.003 / NOISE_TILE_SCALE;
+constexpr double TERRAIN_HEIGHT_PERLIN_LACUNARITY = 1.5;
+constexpr int TERRAIN_HEIGHT_PERLIN_OCTAVES = 16;
+constexpr double TERRAIN_HEIGHT_PERLIN_SCALE = 0.25;
+constexpr double TERRAIN_HEIGHT_PERLIN_BIAS = -0.5;
+
+// Terrain height fractal (ridged multi) noise parameters
+constexpr double TERRAIN_HEIGHT_FRACTAL_FREQUENCY = 0.005 / NOISE_TILE_SCALE;
+constexpr double TERRAIN_HEIGHT_FRACTAL_LACUNARITY = 2.0;
+constexpr double TERRAIN_HEIGHT_FRACTAL_SCALE_FACTOR = 0.025; ///< Multiplied by mountainAmplitude
+constexpr double TERRAIN_HEIGHT_FRACTAL_BIAS = 0.5;
+
+// Blend control noise parameters
+constexpr int TERRAIN_HEIGHT_BLEND_SEED_OFFSET = 1;
+constexpr double TERRAIN_HEIGHT_BLEND_FREQUENCY = 0.005 / NOISE_TILE_SCALE;
+constexpr double TERRAIN_HEIGHT_BLEND_SCALE = 2.0;
+constexpr double TERRAIN_HEIGHT_BLEND_BIAS_FACTOR = 0.1; ///< Multiplied by mountainAmplitude
+
+// Final terrain height scale parameters
+constexpr double TERRAIN_HEIGHT_OUTPUT_SCALE = 20.0;
+constexpr double TERRAIN_HEIGHT_OUTPUT_BIAS = 4.0;
+constexpr double TERRAIN_HEIGHT_CLAMP_MIN = 0.0;
+constexpr double TERRAIN_HEIGHT_CLAMP_MAX = 255.0;
+
+// Foliage density noise parameters
+constexpr int FOLIAGE_DENSITY_SEED_OFFSET = 1234;
+constexpr double FOLIAGE_DENSITY_FREQUENCY = 0.05 / NOISE_TILE_SCALE;
+
+// High-frequency arbitrary noise parameters
+constexpr int HIGH_FREQ_NOISE_SEED_OFFSET = 42;
+constexpr double HIGH_FREQ_NOISE_FREQUENCY = 1.0;
+
+// Foliage density thresholds
+constexpr double FOLIAGE_DENSITY_LIGHT_MAX = 0.1;
+constexpr double FOLIAGE_DENSITY_MEDIUM_MAX = 0.25;
+constexpr double FOLIAGE_DENSITY_DENSE_MAX = 1.0;
+
+// Foliage tile selection thresholds (maximum tileIndex to accept)
+constexpr int FOLIAGE_LIGHT_TILE_THRESHOLD = 20;
+constexpr int FOLIAGE_MEDIUM_TILE_THRESHOLD = 50;
+constexpr int FOLIAGE_DENSE_TILE_THRESHOLD = 95;
+
+// Scaling factor for high-frequency noise used in tile index selection
+constexpr double FOLIAGE_TILE_INDEX_NOISE_SCALE = 200.0;
+} // namespace
+
 void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vector<MapNode *> &mapNodesInDrawingOrder)
 {
   loadTerrainDataFromJSON();
 
   if (m_terrainSettings.seed == 0)
   {
-    srand(static_cast<unsigned int>(time(0)));
+    srand(static_cast<unsigned int>(time(nullptr)));
     m_terrainSettings.seed = rand();
   }
 
   noise::module::Perlin terrainHeightPerlin;
   terrainHeightPerlin.SetSeed(m_terrainSettings.seed);
-  terrainHeightPerlin.SetFrequency(0.003 / 32);
-  terrainHeightPerlin.SetLacunarity(1.5);
-  terrainHeightPerlin.SetOctaveCount(16);
+  terrainHeightPerlin.SetFrequency(TERRAIN_HEIGHT_PERLIN_FREQUENCY);
+  terrainHeightPerlin.SetLacunarity(TERRAIN_HEIGHT_PERLIN_LACUNARITY);
+  terrainHeightPerlin.SetOctaveCount(TERRAIN_HEIGHT_PERLIN_OCTAVES);
   noise::module::ScaleBias terrainHeightPerlinScaled;
   terrainHeightPerlinScaled.SetSourceModule(0, terrainHeightPerlin);
-  terrainHeightPerlinScaled.SetScale(0.25);
-  terrainHeightPerlinScaled.SetBias(-0.5);
+  terrainHeightPerlinScaled.SetScale(TERRAIN_HEIGHT_PERLIN_SCALE);
+  terrainHeightPerlinScaled.SetBias(TERRAIN_HEIGHT_PERLIN_BIAS);
 
   noise::module::RidgedMulti terrainHeightFractal;
   terrainHeightFractal.SetSeed(m_terrainSettings.seed);
-  terrainHeightFractal.SetFrequency(0.005 / 32);
-  terrainHeightFractal.SetLacunarity(2);
+  terrainHeightFractal.SetFrequency(TERRAIN_HEIGHT_FRACTAL_FREQUENCY);
+  terrainHeightFractal.SetLacunarity(TERRAIN_HEIGHT_FRACTAL_LACUNARITY);
   noise::module::ScaleBias terrainHeightFractalScaled;
   terrainHeightFractalScaled.SetSourceModule(0, terrainHeightFractal);
-  //terrainHeightFractalScaled.SetScale(0.5);
-  terrainHeightFractalScaled.SetScale(m_terrainSettings.mountainAmplitude * 0.025);
-  terrainHeightFractalScaled.SetBias(0.5);
+  terrainHeightFractalScaled.SetScale(m_terrainSettings.mountainAmplitude * TERRAIN_HEIGHT_FRACTAL_SCALE_FACTOR);
+  terrainHeightFractalScaled.SetBias(TERRAIN_HEIGHT_FRACTAL_BIAS);
 
   noise::module::Perlin terrainHeightBlendPerlin;
-  terrainHeightBlendPerlin.SetSeed(m_terrainSettings.seed + 1);
-  terrainHeightBlendPerlin.SetFrequency(0.005 / 32);
+  terrainHeightBlendPerlin.SetSeed(m_terrainSettings.seed + TERRAIN_HEIGHT_BLEND_SEED_OFFSET);
+  terrainHeightBlendPerlin.SetFrequency(TERRAIN_HEIGHT_BLEND_FREQUENCY);
   noise::module::ScaleBias terrainHeightBlendScale;
   terrainHeightBlendScale.SetSourceModule(0, terrainHeightBlendPerlin);
-  terrainHeightBlendScale.SetScale(2.0);
-  terrainHeightBlendScale.SetBias(-0.1 * m_terrainSettings.mountainAmplitude);
+  terrainHeightBlendScale.SetScale(TERRAIN_HEIGHT_BLEND_SCALE);
+  terrainHeightBlendScale.SetBias(-TERRAIN_HEIGHT_BLEND_BIAS_FACTOR * m_terrainSettings.mountainAmplitude);
   noise::module::Clamp terrainHeightBlendControl;
   terrainHeightBlendControl.SetSourceModule(0, terrainHeightBlendScale);
   terrainHeightBlendControl.SetBounds(0, 1);
@@ -63,29 +114,29 @@ void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vect
 
   noise::module::ScaleBias terrainHeightScale;
   terrainHeightScale.SetSourceModule(0, terrainHeightBlend);
-  terrainHeightScale.SetScale(20.0);
-  terrainHeightScale.SetBias(4.0);
+  terrainHeightScale.SetScale(TERRAIN_HEIGHT_OUTPUT_SCALE);
+  terrainHeightScale.SetBias(TERRAIN_HEIGHT_OUTPUT_BIAS);
 
   noise::module::Clamp terrainHeight;
   terrainHeight.SetSourceModule(0, terrainHeightScale);
-  terrainHeight.SetBounds(0, 255);
+  terrainHeight.SetBounds(TERRAIN_HEIGHT_CLAMP_MIN, TERRAIN_HEIGHT_CLAMP_MAX);
 
   // Foliage
   noise::module::Perlin foliageDensityPerlin;
-  foliageDensityPerlin.SetSeed(m_terrainSettings.seed + 1234);
-  foliageDensityPerlin.SetFrequency(0.05 / 32);
+  foliageDensityPerlin.SetSeed(m_terrainSettings.seed + FOLIAGE_DENSITY_SEED_OFFSET);
+  foliageDensityPerlin.SetFrequency(FOLIAGE_DENSITY_FREQUENCY);
 
   // Arbitrary Noise
   noise::module::Perlin highFrequencyNoise;
-  highFrequencyNoise.SetSeed(m_terrainSettings.seed + 42);
-  highFrequencyNoise.SetFrequency(1);
+  highFrequencyNoise.SetSeed(m_terrainSettings.seed + HIGH_FREQ_NOISE_SEED_OFFSET);
+  highFrequencyNoise.SetFrequency(HIGH_FREQ_NOISE_FREQUENCY);
 
   const int mapSize = m_terrainSettings.mapSize;
   const size_t vectorSize = static_cast<size_t>(mapSize * mapSize);
   mapNodes.reserve(vectorSize);
 
   // River random source
-  std:: minstd_rand riverRand;
+  std::minstd_rand riverRand;
   riverRand.seed(m_terrainSettings.seed);
 
   // For now, the biome string is read from settings.json for debugging
@@ -97,7 +148,7 @@ void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vect
     for (int y = 0; y < mapSize; y++)
     {
       const int z = 0; // it's not possible to calculate the correct z-index, so set it later in a for loop
-      double rawHeight = terrainHeight.GetValue(x * 32, y * 32, 0.5);
+      double rawHeight = terrainHeight.GetValue(x * NOISE_TILE_SCALE, y * NOISE_TILE_SCALE, 0.5);
       int height = static_cast<int>(rawHeight);
 
       if (height < m_terrainSettings.seaLevel)
@@ -107,16 +158,19 @@ void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vect
       }
       else
       {
-        const double foliageDensity = foliageDensityPerlin.GetValue(x * 32, y * 32, height / 32.0);
+        const double foliageDensity =
+            foliageDensityPerlin.GetValue(x * NOISE_TILE_SCALE, y * NOISE_TILE_SCALE, height / NOISE_TILE_SCALE);
         bool placed = false;
 
         if (foliageDensity > 0.0 && height > m_terrainSettings.seaLevel)
         {
-          int tileIndex = static_cast<int>(std::abs(round(highFrequencyNoise.GetValue(x * 32, y * 32, height / 32.0) * 200.0)));
+          int tileIndex = static_cast<int>(std::abs(
+              round(highFrequencyNoise.GetValue(x * NOISE_TILE_SCALE, y * NOISE_TILE_SCALE, height / NOISE_TILE_SCALE) *
+                    FOLIAGE_TILE_INDEX_NOISE_SCALE)));
 
-          if (foliageDensity < 0.1)
+          if (foliageDensity < FOLIAGE_DENSITY_LIGHT_MAX)
           {
-            if (tileIndex < 20)
+            if (tileIndex < FOLIAGE_LIGHT_TILE_THRESHOLD)
             {
               tileIndex = tileIndex % static_cast<int>(m_biomeInformation[currentBiome].treesLight.size());
               mapNodes.emplace_back(MapNode{Point{x, y, z, height, rawHeight}, m_biomeInformation[currentBiome].terrain[0],
@@ -124,9 +178,9 @@ void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vect
               placed = true;
             }
           }
-          else if (foliageDensity < 0.25)
+          else if (foliageDensity < FOLIAGE_DENSITY_MEDIUM_MAX)
           {
-            if (tileIndex < 50)
+            if (tileIndex < FOLIAGE_MEDIUM_TILE_THRESHOLD)
             {
               tileIndex = tileIndex % static_cast<int>(m_biomeInformation[currentBiome].treesMedium.size());
               mapNodes.emplace_back(MapNode{Point{x, y, z, height, rawHeight}, m_biomeInformation[currentBiome].terrain[0],
@@ -134,7 +188,7 @@ void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vect
               placed = true;
             }
           }
-          else if (foliageDensity < 1.0 && tileIndex < 95)
+          else if (foliageDensity < FOLIAGE_DENSITY_DENSE_MAX && tileIndex < FOLIAGE_DENSE_TILE_THRESHOLD)
           {
             tileIndex = tileIndex % static_cast<int>(m_biomeInformation[currentBiome].treesDense.size());
 
@@ -143,7 +197,7 @@ void TerrainGenerator::generateTerrain(std::vector<MapNode> &mapNodes, std::vect
             placed = true;
           }
         }
-        if (placed == false)
+        if (!placed)
         {
           mapNodes.emplace_back(MapNode{Point{x, y, z, height, rawHeight}, m_biomeInformation[currentBiome].terrain[0]});
         }
