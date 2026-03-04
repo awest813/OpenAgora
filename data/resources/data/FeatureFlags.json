@@ -1,7 +1,7 @@
 {
   "_comment": "Feature flags for in-development systems. Keep all values 'false' on main. Set to 'true' locally to test a system before it is ready to ship.",
   "affordability_system":   true,
-  "heatmap_overlay":        false,
+  "heatmap_overlay":        true,
   "json_content_pipeline":  true,
   "governance_layer":       true,
   "event_system":           true,

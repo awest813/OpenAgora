@@ -9,8 +9,9 @@
 
 **Engine:** SDL2 + Dear ImGui, C++17, CMake/Conan, libnoise terrain gen  
 **Simulation depth today:** Zone management (RCI), power grids, tile placement, terrain generation,
-city-wide indices, affordability model, policy engine, governance loop with council checkpoints and event system  
-### What's still missing:** Heatmap overlay, economy multipliers (tax/growth modifiers from approval), Phase 3 IP conversion
+city-wide indices, affordability model, policy engine, governance loop with council checkpoints,
+event system, budget system, and affordability heatmap overlay  
+**What's still in progress:** Economy multipliers fully wired to zone growth (Phase 2 completion), Phase 3 IP conversion
 
 The data-model hooks are already partially there – `TileData` already carries
 `inhabitants`, `happiness`, `educationLevel`, `pollutionLevel`, `crimeLevel`,
@@ -22,8 +23,8 @@ that the player can see, and the policy/event systems act on them.
 ## Phase 0 – Fork Hygiene ✅ Complete
 
 ### 0.1 Repository identity
-- [ ] Rename repository (e.g. `openagora` or `cytopia-civics`) and update `CMakeLists.txt` project name
-- [ ] Update `README.md`: new name, vision statement, build instructions, contribution guide
+- [x] Rename repository to `openagora` and update `CMakeLists.txt` project name
+- [x] Update `README.md`: new name, vision statement, build instructions, contribution guide
 - [x] Add `/docs/ROADMAP.md` (this file) and `/docs/DESIGN.md`
 
 ### 0.2 GitHub project hygiene
@@ -43,7 +44,7 @@ that the player can see, and the policy/event systems act on them.
 
 ---
 
-## Phase 1 – Flagship Policy System: Housing Affordability (2–3 weeks)
+## Phase 1 – Flagship Policy System: Housing Affordability ✅ Complete
 
 ### Why this system?
 It touches map data (zone density, land value proxies), the economy (upkeep/budget),
@@ -167,19 +168,22 @@ which marks a fraction of occupied residential zone nodes as vacant so buildings
 
 **UI integration:** PolicyPanel with per-policy toggles + cost display ✅ (see `src/game/ui/PolicyPanel.hxx/.cxx`)
 
-### 1.7 Heatmap Overlay: Affordability
+### 1.7 Heatmap Overlay: Affordability ✅
 
-- Reuse existing `MapLayers` bitmask system to add an `AFFORDABILITY_OVERLAY` layer
-- Each `MapNode` gets a `float affordabilityScore` computed from its zone + neighbours
-- Rendered as a colour gradient (green → yellow → red) blended over the tile texture
-- Toggled from the existing layer visibility UI
+**File:** `src/engine/render/AffordabilityOverlay.hxx/.cxx`
 
-**Status:** `heatmap_overlay` flag is `false`; implementation pending (see issue #6).
+- Each visible residential `Sprite` gets a semi-transparent colour tint based on its zone density:
+  - LOW density → green (affordable)
+  - MEDIUM density → yellow (moderate pressure)
+  - HIGH density → red (unaffordable)
+- Rendered via SDL `SDL_RenderFillRect` with `SDL_BLENDMODE_BLEND` after the main tile layer
+- Hooked into `Map::renderMap()` – called after all tile sprites so the tint sits on top of buildings
+- Enabled by the `heatmap_overlay` feature flag in `FeatureFlags.json` (now `true`)
 
-### Phase 1 Milestone
+### Phase 1 Milestone ✅
 Ship a devlog: *"OpenAgora adds an affordability simulation loop."*
 Player can place zones, watch affordability degrade as density rises without intervention,
-then apply sliders to stabilise it.
+then apply sliders to stabilise it. Affordability heatmap shows density pressure per tile.
 
 ---
 
@@ -325,7 +329,9 @@ src/
 │       ├── PolicyPanel.hxx/.cxx       ✅
 │       └── NotificationOverlay.hxx/.cxx ✅
 ├── engine/         ← map, rendering, input (existing)
-├── render/         ← heatmap overlays, sprite compositing (pending)
+│   └── render/
+│       └── AffordabilityOverlay.hxx/.cxx ✅ (heatmap overlay)
+├── render/         ← heatmap overlays, sprite compositing
 └── services/       ← clock, audio, feature flags
     └── FeatureFlags.hxx/.cxx          ✅
 
@@ -349,7 +355,7 @@ Policy and event definitions live in JSON. No hardcoded balance numbers in C++.
 | 3 | ~~Displacement pressure → apply population churn to map `MapNode` inhabitants~~ ✅ | `simulation`, `phase-1` |
 | 4 | ~~Policy: Affordable Housing Fund (budget → reduces displacement)~~ ✅ | `policy`, `phase-1` |
 | 5 | ~~Policy: Upzoning Incentives (density growth modifier)~~ ✅ | `policy`, `phase-1` |
-| 6 | Heatmap overlay: affordability | `ui`, `phase-1` |
+| 6 | ~~Heatmap overlay: affordability~~ ✅ | `ui`, `phase-1` |
 | 7 | ~~PolicyPanel UI: per-policy toggles + monthly cost display~~ ✅ | `ui`, `phase-1` |
 | 8 | ~~Event system: trigger + effect + notification UI~~ ✅ | `simulation`, `ui`, `phase-2` |
 | 9 | ~~Economy system: budget tracking with approval multipliers~~ ✅ | `simulation`, `phase-2` |
@@ -360,6 +366,6 @@ Policy and event definitions live in JSON. No hardcoded balance numbers in C++.
 ## Definition of Done (per phase)
 
 **Phase 0:** Docs committed, labels created, feature flag system compiles and is tested. ✅  
-**Phase 1:** Affordability loop visible to player; heatmap toggleable; policies have measurable effect; devlog written.  
+**Phase 1:** Affordability loop visible to player; heatmap toggleable; policies have measurable effect; devlog written. ✅  
 **Phase 2:** Council checkpoint fires ✅; events trigger from index thresholds ✅; publicTrust affects gameplay *(approval computed, economy effects pending)*; soft-fail scenario playable ✅.  
 **Phase 3:** Binary and UI strings renamed; at least one original art asset in place; no Cytopia branding visible to player.
