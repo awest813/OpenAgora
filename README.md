@@ -1,65 +1,76 @@
-![Cytopia Logo](data/resources/images/app_icons/logo_big_textured.png?raw=1)
+# OpenAgora
 
-[![Discord](https://img.shields.io/discord/448344322887254018.svg?logo=discord)](https://discord.gg/qwa2H3G)
+**A policy-driven city simulation where governance mechanics *are* the gameplay.**
 
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/JimmySnails/Cytopia.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JimmySnails/Cytopia/alerts/)
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/JimmySnails/Cytopia.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/JimmySnails/Cytopia/context:cpp)
+> Fork of [Cytopia](https://github.com/CytopiaTeam/Cytopia) evolved into a civic city builder.
+> Build your city, earn your residents' trust, and navigate the politics of urban policy.
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=cytopia&metric=alert_status)](https://sonarcloud.io/dashboard?id=cytopia)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=cytopia&metric=coverage)](https://sonarcloud.io/dashboard?id=cytopia)
+[![GitHub](https://img.shields.io/badge/GitHub-OpenAgora-blue?logo=github)](https://github.com/awest813/OpenAgora)
 
-[![Translations](https://hosted.weblate.org/widgets/cytopia/-/game/svg-badge.svg)](https://hosted.weblate.org/projects/cytopia/)
+---
 
+OpenAgora is a free, open-source isometric city-building game built on an SDL2 rendering engine (C++17).
+Unlike traditional city builders, the core challenge is **governance**: every policy you enact has costs,
+trade-offs, and consequences tracked through a living simulation of affordability, safety, jobs, commute,
+and pollution. Residents react. Elections loom. Build a city people actually want to live in.
 
-<b>Website/Forums</b> - Cytopia.net - <https://www.cytopia.net/><br>
-<b>YouTube</b> - Cytopia - <https://www.youtube.com/channel/UCJIzKBD3wl6KRohiX6i53GA><br>
-<b>Twitter</b> - @CytopiaGame - <https://twitter.com/CytopiaGame><br>
-<b>Reddit</b> - r/Cytopia - <https://www.reddit.com/r/Cytopia/><br>
-<b>Discord</b> - Cytopia - <https://discord.gg/MG3tgYV6ce><br>
-<b>Patreon</b> - Cytopia by Jimmy Snails - <https://www.patreon.com/cytopia><br>
-<b>Itch io</b> - Cytopia - <https://cytopia.itch.io/cytopia><br>
-<b>GitHub</b> - Cytopia by CytopiaTeam - <https://github.com/CytopiaTeam/Cytopia><br>
-<b>Translation project on Weblate</b> - Cytopia - <https://hosted.weblate.org/projects/cytopia/><br>
+---
 
-Cytopia is a free, open source retro pixel-art city building game with a big focus on mods. It utilizes a custom isometric rendering engine based on SDL2.
+## Current Features
 
-#### Current Key Features:
-- Custom UI System
-- SDL2 based rendering engine written in C++
-- Camera panning, zooming, relocating
-- Terrain manipulation
-- Procedural Terrain Generation
-- Pixel-art graphics made by graphics team lead by Kingtut 101
-- An original soundtrack, ambient noises, and sound effects made mostly by MB22
-- A Qt based tile editor for editing TileData JSON files
+### Engine
+- SDL2 isometric rendering engine (C++17)
+- Dear ImGui overlay panels
+- Camera panning, zooming, and relocating
+- Procedural terrain generation (libnoise)
+- Zone management (Residential / Commercial / Industrial)
+- Power grid simulation
 
-#### Planned features:
-- Biomes
-- OpenGL Renderer
-- Gameplay mechanics
-- In-Game Mod downloading mechanism
-- Android / iOS
-- Scripting language for mods (like LUA)
+### Simulation Layer
+- **City Indices Dashboard** – five live city-wide metrics (affordability, safety, jobs, commute, pollution) with trend arrows
+- **Affordability Model** – rent/income ratio, displacement pressure, and population churn
+- **Policy Engine** – data-driven policies loaded from JSON; toggle policies at runtime and see their monthly cost
+- **Governance System** – public trust score, council checkpoints, soft-fail scenarios
+- **Budget System** – monthly tax revenue with approval multipliers, running balance, 12-month history
+- **Event System** – data-driven trigger/effect events (rent strikes, business exodus, transit breakdowns)
+- **Affordability Heatmap Overlay** – per-tile green/yellow/red heat tint showing residential density pressure
 
-For code documentation, see the project's [Doxygen Documentation](https://cytopia-docs.netlify.app/).
+### UI
+- City Indices Panel (sidebar with coloured bars and trend arrows)
+- Policy Panel (per-policy toggles, monthly cost, budget summary)
+- Governance Panel (approval bar, event log, council checkpoint modal)
+- Notification Overlay (toast-style event alerts, 8-second auto-dismiss)
 
-If you have questions or if you want to join the project, visit the [Project's Discord Server](https://discord.gg/qwa2H3G).
-If Discord is not for you, visit our IRC channel on freenode at #Cytopia
+---
 
-In case you want to support our project on patreon, visit our [Patreon Page](https://patreon.com/cytopia).
+## Roadmap
 
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan.
 
-#### Supported Platforms
-Linux (clang / g++-5 or higher)
-Windows
-Mac
+| Phase | Status | Summary |
+|-------|--------|---------|
+| Phase 0 – Fork hygiene | ✅ Complete | Feature flags, architecture scaffolding, docs |
+| Phase 1 – Housing Affordability | ✅ Complete | Full affordability loop + heatmap overlay |
+| Phase 2 – Governance Layer | 🔄 Core complete | Public trust, events, council checkpoints |
+| Phase 2.5 – Economy Foundation | ✅ Complete | Budget system with approval multipliers |
+| Phase 3 – Original IP Conversion | 🔲 Ongoing | New art, audio, lore, and branding |
 
-#### Prerequisites
+---
+
+## Supported Platforms
+
+- Linux (clang / g++17 or later)
+- Windows
+- macOS
+
+---
+
+## Prerequisites
 
 - [CMake 3.16 or later](https://cmake.org/)
 - [Conan](https://conan.io)
 - [SDL2](https://www.libsdl.org/)
-- [SDL2_tff](https://www.libsdl.org/)
+- [SDL2_ttf](https://www.libsdl.org/)
 - [SDL2_image](https://www.libsdl.org/)
 - [OpenAL](https://www.openal.org/)
 - [zlib](https://www.zlib.net/)
@@ -67,20 +78,72 @@ Mac
 - [libogg](https://www.xiph.org/ogg/)
 - [libvorbis](https://www.xiph.org/vorbis/)
 - [libpng](http://www.libpng.org/pub/png/libpng.html)
-- [imgui](https://github.com/ocornut/imgui)
+- [Dear ImGui](https://github.com/ocornut/imgui)
 
-#### Build instructions
+---
 
-See: <https://github.com/CytopiaTeam/Cytopia/wiki/Build-instructions>
+## Build Instructions
 
-#### Coding guidelines
+```sh
+# Clone the repository
+git clone https://github.com/awest813/OpenAgora.git
+cd OpenAgora
 
-See: <https://github.com/CytopiaTeam/Cytopia/wiki/Coding-guidelines>
+# Install Conan dependencies
+pip install conan
+./get_dependencies.sh
 
-#### Work-in-Progress Screenshot
+# Configure and build
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . -j$(nproc)
+```
 
-![alt text](https://cytopia.net/github/Screenshot1.png)
-![alt text](https://cytopia.net/github/Screenshot2.jpg)
+For detailed platform-specific instructions see [`docs/`](docs/).
 
-We're proud to be part of Jetbrains opensource program!  
-[<img src="https://cytopia.net/github/jetbrains.png" alt="Jetbrains logo" width="200" height="200"> ](https://www.jetbrains.com/?from=Cytopia)
+---
+
+## Running Tests
+
+```sh
+cd build
+ctest --output-on-failure
+# Or run simulation unit tests directly (no display required):
+./OpenAgora_Tests "[simulation]"
+```
+
+33 simulation-layer unit tests cover all five city indices, the affordability model,
+the policy engine, the governance system, and the budget system.
+
+---
+
+## Coding Guidelines
+
+- **File extensions:** `.hxx` / `.cxx` (project convention)
+- **Naming:** `CamelCase` classes, `camelCase` members, `snake_case` JSON keys
+- **No raw pointers** in new code – use `std::unique_ptr` or references
+- **No SDL headers in `src/simulation/`** – the simulation layer must be unit-testable without a display
+- **Balance numbers in data files** – never hardcode a float balance value in C++; use JSON
+- **Feature-flag every new system** before merging to `main` (see `data/resources/data/FeatureFlags.json`)
+
+See [`docs/DESIGN.md`](docs/DESIGN.md) for full architecture documentation.
+
+---
+
+## Contributing
+
+1. Pick an open issue (look for `good-first-issue` or `phase-1` / `phase-2` labels)
+2. Create a branch off `main`
+3. Add a unit test in `tests/simulation/` for any new simulation logic
+4. Open a PR – CI will run the full test suite
+
+New policies are the easiest contribution: drop a JSON file in
+`data/resources/data/policies/` following the schema in [`docs/DESIGN.md §4.3`](docs/DESIGN.md)
+and no C++ changes are needed for simple `add`/`multiply` effects.
+
+---
+
+## License
+
+OpenAgora is derived from [Cytopia](https://github.com/CytopiaTeam/Cytopia) which is
+licensed under the MIT License. See [`license.txt`](license.txt) for details.

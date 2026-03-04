@@ -14,11 +14,11 @@ include(CMakeCM)
 # create the cmake project
 project(
         # this will be the ${PROJECT_NAME}
-        Cytopia
+        OpenAgora
         # this will provide ${PROJECT_VERSION}
         VERSION 0.4
         # Description
-        DESCRIPTION "A city-building game"
+        DESCRIPTION "A policy-driven city simulation game"
         # we are using C++
         LANGUAGES CXX
 )
@@ -26,7 +26,7 @@ project(
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-option(BUILD_TEST "Build Cytopia Tests" ON)
+option(BUILD_TEST "Build OpenAgora Tests" ON)
 option(ENABLE_PHC "Use a Precompiled header for speeding up the build" ON)
 option(ENABLE_DEBUG "Enable Debug (asserts and logs)" OFF)
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
