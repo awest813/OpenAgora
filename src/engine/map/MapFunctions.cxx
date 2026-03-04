@@ -1,5 +1,6 @@
 #include "MapFunctions.hxx"
 #include <PointFunctions.hxx>
+#include <unordered_map>
 #include "../../services/Randomizer.hxx"
 #include "common/JsonSerialization.hxx"
 #include <Constants.hxx>
@@ -144,7 +145,9 @@ void MapFunctions::updateNodeNeighbors(const std::vector<Point> &nodes)
       NeighborNodesPosition::BOTTOM_RIGHT | NeighborNodesPosition::LEFT | NeighborNodesPosition::TOP};
 
   std::vector<Point> nodesToBeUpdated;
-  std::map<int, std::vector<Point>> nodeCache;
+  // ⚡ Bolt: Cache optimization - unordered_map provides O(1) lookup instead of O(log N) for integer keys.
+  // This function is a hot path during terrain modification.
+  std::unordered_map<int, std::vector<Point>> nodeCache;
   std::queue<Point> updatedNodes;
   std::unordered_set<Point> nodesToElevateSet;
   std::vector<Point> nodesToElevate;
