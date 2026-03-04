@@ -83,6 +83,17 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
   if (flags.governanceLayer())
   {
     GovernanceSystem::instance().tickMonth(indices);
+
+    // Apply approval-driven zone growth rate (DESIGN.md §4.5).
+    const float approval = GovernanceSystem::instance().approval();
+    float growthRate = 1.0f;
+    if (approval >= 85.f)
+      growthRate = 1.20f;
+    else if (approval >= 70.f)
+      growthRate = 1.10f;
+    else if (approval < 30.f)
+      growthRate = 0.90f;
+    m_ZoneManager.setGrowthRateMultiplier(growthRate);
   }
 
   // ── BudgetSystem ───────────────────────────────────────────────────────────

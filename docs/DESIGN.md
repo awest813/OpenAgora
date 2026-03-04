@@ -114,7 +114,7 @@ The goal is to make *simulation logic* independent of SDL so it can:
 | `GovernancePanel` | `src/game/ui/` | ✅ Done | Approval bar, event log, council checkpoint modal |
 | `PolicyPanel` | `src/game/ui/` | ✅ Done | Per-policy toggles with cost display and budget summary |
 | `NotificationOverlay` | `src/game/ui/` | ✅ Done | Toast-style event notifications (8s auto-dismiss) |
-| `AffordabilityOverlay` | `src/engine/render/` | ⏳ Pending | Per-tile heatmap rendering |
+| `AffordabilityOverlay` | `src/engine/render/` | ✅ Done | Per-tile heatmap rendering |
 
 ### 2.3 New signals
 
@@ -470,5 +470,5 @@ These supplement the existing project style.
 | No CI build for Linux (only local) | High | Add GitHub Actions workflow in Phase 0 |
 | ~~`AffordabilityModel::churnRate()` not wired to `MapNode` inhabitant counts~~ | ~~High~~ | ✅ Fixed: `ZoneManager::applyChurn()` + `GamePlay` integration |
 | ~~`PolicyEngine::tick()` budget cost not connected to a city Budget singleton~~ | ~~Medium~~ | ✅ Fixed: `BudgetSystem` singleton, wired in `GamePlay` |
-| `GovernanceSystem` approval effects (tax/growth multipliers) not applied | Medium | `BudgetSystem` applies approval multiplier to tax revenue; zone growth bonuses pending |
+| `GovernanceSystem` approval effects (tax/growth multipliers) not applied | Medium | `BudgetSystem` applies approval multiplier to tax revenue; `ZoneManager::setGrowthRateMultiplier()` applies zone growth bonus ✅ |
 | ~~`GovernancePanel` policy pledges do not call `PolicyEngine::setActive`~~ | ~~Medium~~ | ✅ Fixed: checkpoint Continue button calls `PolicyEngine::setActive` |
