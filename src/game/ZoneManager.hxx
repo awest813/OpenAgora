@@ -24,6 +24,24 @@ public:
    */
   void applyChurn(float churnFraction);
 
+  /**
+   * @brief Set the zone growth rate multiplier driven by governance approval.
+   *
+   * Values below 1.0 slow building spawning (fraction of spawn attempts are
+   * skipped).  Values above 1.0 give some zone areas a bonus spawn attempt
+   * each tick.  The multiplier is applied probabilistically per-area inside
+   * spawnBuildings().
+   *
+   * Approval ranges from DESIGN.md §4.5:
+   *   < 30   → 0.90  (growth rate × 0.90)
+   *   30–70  → 1.00  (neutral)
+   *   70–85  → 1.10  (growth rate × 1.10)
+   *   ≥ 85   → 1.20  (growth rate × 1.20)
+   *
+   * @param rate Multiplier in [0, 2]. Out-of-range values are clamped.
+   */
+  void setGrowthRateMultiplier(float rate);
+
 private:
   /**
    * @brief Spawn Buildings on the gathered tileMap
@@ -80,6 +98,7 @@ private:
   std::vector<Point> m_nodesToOccupy; /// All zoneAreas
   std::vector<Point> m_nodesToVacate; /// All zoneAreas
   std::vector<Point> m_nodesToRemove; /// All zoneAreas
+  float m_growthRateMultiplier = 1.0f; ///< Governance-driven spawn rate modifier
 };
 
 #endif

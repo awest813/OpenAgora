@@ -11,6 +11,8 @@
 #include "common/Constants.hxx"
 #include "Filesystem.hxx"
 #include "../services/Randomizer.hxx"
+#include "../services/FeatureFlags.hxx"
+#include "render/AffordabilityOverlay.hxx"
 
 #include "json.hxx"
 
@@ -108,6 +110,11 @@ void Map::renderMap() const
   for (int i = 0; i < m_visibleNodesCount; ++i)
   {
     pMapNodesVisible[i]->render();
+  }
+
+  if (FeatureFlags::instance().heatmapOverlay())
+  {
+    AffordabilityOverlay::render(pMapNodesVisible.data(), m_visibleNodesCount, mapNodes);
   }
 }
 

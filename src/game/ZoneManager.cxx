@@ -6,6 +6,10 @@
 #include <SignalMediator.hxx>
 #include <MapFunctions.hxx>
 
+#include <algorithm>
+#include <random>
+#include <thread>
+
 ZoneManager::ZoneManager()
 {
   // Callbacks for setTileID
@@ -82,6 +86,13 @@ void ZoneManager::update()
 
 void ZoneManager::spawnBuildings()
 {
+  // A thread-local RNG is used to convert the growth-rate multiplier into a
+  // per-area spawn probability without introducing determinism issues.
+  // Combine random_device entropy with the thread ID hash for a better seed.
+  static thread_local std::mt19937 rng{std::random_device{}() ^
+    static_cast<unsigned>(std::hash<std::thread::id>{}(std::this_thread::get_id()))};
+  std::uniform_real_distribution<float> dist{0.f, 1.f};
+
   for (auto &zoneArea : m_zoneAreas)
   {
     // check if there are any buildings to spawn, if not, do nothing.
@@ -98,7 +109,18 @@ void ZoneManager::spawnBuildings()
         else
           free++;
       }
+
+      // For rates below 1.0, skip this area with probability (1 – rate)
+      // so that building growth slows proportionally.
+      if (m_growthRateMultiplier < 1.f && dist(rng) > m_growthRateMultiplier)
+        continue;
+
       zoneArea.spawnBuildings();
+
+      // For rates above 1.0, give a bonus spawn attempt with probability
+      // equal to the fractional excess (e.g. 1.10 → 10 % extra chance).
+      if (m_growthRateMultiplier > 1.f && dist(rng) < (m_growthRateMultiplier - 1.f))
+        zoneArea.spawnBuildings();
     }
   }
 }
@@ -305,4 +327,10 @@ void ZoneManager::applyChurn(float churnFraction)
       area.setVacancy(occupied[i], true);
     }
   }
+}
+
+void ZoneManager::setGrowthRateMultiplier(float rate)
+{
+  // Clamp to a reasonable range: 0 stops all growth, >2 is excessive.
+  m_growthRateMultiplier = std::max(0.f, std::min(2.f, rate));
 }

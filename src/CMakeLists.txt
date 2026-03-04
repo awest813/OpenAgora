@@ -68,6 +68,7 @@ set(SOURCE_FILES
         game/ui/PolicyPanel.{hxx,cxx}
         game/ui/NotificationOverlay.{hxx,cxx}
         game/ui/UITheme.hxx
+        engine/render/AffordabilityOverlay.{hxx,cxx}
         )
 
 if (ANDROID)
