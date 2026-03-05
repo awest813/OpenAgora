@@ -3,7 +3,7 @@
 
 #include "../GameObjects/MapNode.hxx"
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 struct BiomeData
@@ -58,7 +58,9 @@ public:
 private:
   TerrainSettings m_terrainSettings;
 
-  std::map<std::string, BiomeData> m_biomeInformation; ///< key: biome
+  // ⚡ Bolt: Cache optimization - unordered_map provides O(1) lookup instead of O(log N) for string keys.
+  // This map is accessed frequently inside the hot loop generating the initial map.
+  std::unordered_map<std::string, BiomeData> m_biomeInformation; ///< key: biome
   std::vector<Point> m_riverSourceNodes;
 };
 
