@@ -4,25 +4,66 @@
 
 #include <ctime>
 
-#if defined(CYTOPIA_PLATFORM_LINUX) || defined(CYTOPIA_PLATFORM_HAIKU)
+#if defined(CYTOPIA_PLATFORM_LINUX) || defined(CYTOPIA_PLATFORM_HAIKU) || defined(CYTOPIA_PLATFORM_MACOSX)
 #include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <vector>
+
+static int executeNoShell(const std::vector<std::string> &args, bool background = false)
+{
+  if (args.empty())
+    return -1;
+
+  pid_t pid = fork();
+  if (pid == 0)
+  {
+    if (background)
+    {
+      pid_t pid2 = fork();
+      if (pid2 > 0)
+      {
+        _exit(0);
+      }
+      else if (pid2 < 0)
+      {
+        _exit(1);
+      }
+    }
+
+    std::vector<char *> c_args;
+    for (const auto &arg : args)
+    {
+      c_args.push_back(const_cast<char *>(arg.c_str()));
+    }
+    c_args.push_back(nullptr);
+
+    execvp(c_args[0], c_args.data());
+    _exit(1);
+  }
+  else if (pid > 0)
+  {
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return WEXITSTATUS(status);
+  }
+  return -1;
+}
 #endif
 
 #ifdef CYTOPIA_PLATFORM_LINUX
 #include <cstdlib>
 #include <string.h>
+
 const char *getDialogCommand()
 {
-  if (::system(nullptr))
-  {
-    if (::system("which gdialog") == 0)
-      return "gdialog";
+  if (executeNoShell({"which", "gdialog"}) == 0)
+    return "gdialog";
 
-    else if (::system("which kdialog") == 0)
-      return "kdialog";
-  }
+  else if (executeNoShell({"which", "kdialog"}) == 0)
+    return "kdialog";
+
   return nullptr;
 }
 #elif defined(CYTOPIA_PLATFORM_MACOSX)
@@ -37,12 +78,9 @@ void OSystem::error(const std::string &title, const std::string &text)
   const char *dialogCommand = getDialogCommand();
   if (dialogCommand)
   {
-    std::string command = dialogCommand;
-    command += " --title \"" + title + "\" --msgbox \"" + text + "\"";
-    int syserror = ::system(command.c_str());
-    if (syserror)
+    if (executeNoShell({dialogCommand, "--title", title, "--msgbox", text}) != 0)
     {
-      LOG(LOG_DEBUG) << "WARNING: Cant execute command " << command;
+      LOG(LOG_DEBUG) << "WARNING: Cant execute command " << dialogCommand;
     }
   }
 
@@ -55,32 +93,31 @@ void OSystem::error(const std::string &title, const std::string &text)
 void OSystem::openUrl(const std::string &url, const std::string &prefix)
 {
 #ifdef CYTOPIA_PLATFORM_LINUX
-  std::string command = prefix + "xdg-open '" + url + "'";
-  LOG(LOG_DEBUG) << command;
-  ::system(command.c_str());
+  (void)prefix;
+  executeNoShell({"xdg-open", url});
 
 #elif defined(CYTOPIA_PLATFORM_WIN)
+  (void)prefix;
   ShellExecuteA(0, "Open", url.c_str(), 0, 0, SW_SHOW);
 
 #elif defined(CYTOPIA_PLATFORM_MACOSX)
-  std::string command = "open \"" + url + "\" &";
-  ::system(command.c_str());
+  (void)prefix;
+  executeNoShell({"open", url}, true);
 #endif
 }
 
 void OSystem::openDir(const std::string &path, const std::string &prefix)
 {
-  std::string command;
-
 #ifdef CYTOPIA_PLATFORM_LINUX
-  command = prefix + "nautilus '" + path + "' &";
-  ::system(command.c_str());
+  (void)prefix;
+  executeNoShell({"nautilus", path}, true);
 #elif defined(CYTOPIA_PLATFORM_WIN)
+  (void)prefix;
   ShellExecute(GetDesktopWindow(), "open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 
 #elif defined(CYTOPIA_PLATFORM_MACOSX)
-  command = "open \"" + path + "\" &";
-  ::system(command.c_str());
+  (void)prefix;
+  executeNoShell({"open", path}, true);
 
 #endif
 }
