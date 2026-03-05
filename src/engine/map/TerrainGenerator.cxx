@@ -235,9 +235,9 @@ void TerrainGenerator::generateRiver(std::vector<MapNode> &mapNodes)
   double curHeight, nextHeight, neighborHeight;
   int riverNumber = 0;
 
-  for (int i = 0; i < m_riverSourceNodes.size(); i++)
+  for (const auto &riverSourceNode : m_riverSourceNodes)
   {
-    curPoint = m_riverSourceNodes[i];
+    curPoint = riverSourceNode;
     curHeight = mapNodes[curPoint.toIndex()].getCoordinates().rawHeight;
 
     while (true)
@@ -248,25 +248,25 @@ void TerrainGenerator::generateRiver(std::vector<MapNode> &mapNodes)
       // Find the lowest node
       nextHeight = 32;
       neighbors = PointFunctions::getNeighbors(curPoint, false);
-      for (int j = 0; j < neighbors.size(); ++j)
+      for (const auto &neighbor : neighbors)
       {
-        if (riverNodes.find(neighbors[j]) != riverNodes.end())
+        if (riverNodes.find(neighbor) != riverNodes.end())
           continue;
-        neighborHeight = mapNodes[neighbors[j].toIndex()].getCoordinates().rawHeight;
+        neighborHeight = mapNodes[neighbor.toIndex()].getCoordinates().rawHeight;
         if (neighborHeight < nextHeight)
         {
           nextHeight = neighborHeight;
-          nextPoint = neighbors[j];
+          nextPoint = neighbor;
         }
       }
 
       // Add lowest nodes in the area to riverNodes
-      for (int j = 0; j < neighbors.size(); ++j)
+      for (const auto &neighbor : neighbors)
       {
-        neighborHeight = mapNodes[neighbors[j].toIndex()].getCoordinates().rawHeight;
-        if (neighborHeight <= nextHeight + 0.005 && (riverNodes.find(neighbors[j]) == riverNodes.end()))
+        neighborHeight = mapNodes[neighbor.toIndex()].getCoordinates().rawHeight;
+        if (neighborHeight <= nextHeight + 0.005 && (riverNodes.find(neighbor) == riverNodes.end()))
         {
-          riverNodes.insert(neighbors[j]);
+          riverNodes.insert(neighbor);
         }
       }
 
