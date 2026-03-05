@@ -50,16 +50,17 @@ void CityIndicesPanel::draw() const
   {
     const char *icon;
     const char *label;
+    const char *tooltip;
     float cur;
     float prev;
   };
 
   const Row rows[] = {
-      {"$", "Affordability", cur.affordability, prev.affordability},
-      {"S", "Safety",        cur.safety,        prev.safety},
-      {"E", "Economy",       cur.jobs,          prev.jobs},
-      {"C", "Commute",       cur.commute,       prev.commute},
-      {"P", "Pollution",     cur.pollution,     prev.pollution},
+      {"$", "Affordability", "Housing cost vs. density", cur.affordability, prev.affordability},
+      {"S", "Safety",        "Inverted crime + fire hazard", cur.safety,        prev.safety},
+      {"E", "Economy",       "Commercial/industrial capacity relative to residents", cur.jobs,          prev.jobs},
+      {"C", "Commute",       "Road infrastructure relative to map size", cur.commute,       prev.commute},
+      {"P", "Pollution",     "Inverted pollution (100 = pristine)", cur.pollution,     prev.pollution},
   };
 
   const float labelColW = 94.f;
@@ -69,7 +70,9 @@ void CityIndicesPanel::draw() const
   {
     // Label + trend on the left
     ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
-    ui::Text("%-12s", row.label);
+    ui::Text("%s %-12s", row.icon, row.label);
+    if (ui::IsItemHovered())
+      ui::SetTooltip("%s", row.tooltip);
     ImGui::PopStyleColor();
 
     // Trend arrow
