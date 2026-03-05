@@ -1,0 +1,3 @@
+## 2025-03-05 - Optimize TerrainGenerator Biome Cache
+**Learning:** `std::map` was used to map biome string IDs to BiomeData structs in `TerrainGenerator`. This is accessed repeatedly during terrain generation for every single map tile to determine what flora/trees to place. Changing it to `std::unordered_map` turns O(log N) lookups into O(1) lookups in a hot loop that runs `mapSize * mapSize` times during map generation.
+**Action:** Replaced `std::map<std::string, BiomeData>` with `std::unordered_map<std::string, BiomeData>` in `TerrainGenerator.hxx` to speed up initial terrain generation. Tests pass and logic remains functionally identical since ordering of the map is not required for string-based lookup.
