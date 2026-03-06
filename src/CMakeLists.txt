@@ -21,6 +21,7 @@ set(SOURCE_FILES
         services/ResourceManager.{hxx,cxx}
         services/ResourceManager.inl.hxx
         services/FeatureFlags.{hxx,cxx}
+        services/FrameMetrics.{hxx,cxx}
         simulation/CityIndices.{hxx,cxx}
         simulation/GovernanceSystem.{hxx,cxx}
         simulation/AffordabilityModel.{hxx,cxx}

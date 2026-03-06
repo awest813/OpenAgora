@@ -64,6 +64,9 @@ public:
  */
   void toggleDebugMenu() { m_showDebugMenu = !m_showDebugMenu; };
 
+  /// @brief Returns true when the developer debug overlay is visible.
+  bool isDebugMenuVisible() const noexcept { return m_showDebugMenu; }
+
   /**
  * @brief Helper function to update the FPS Counter
  * 

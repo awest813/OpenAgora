@@ -15,6 +15,7 @@
 #include "json.hxx"
 #include "betterEnums.hxx"
 #include <Camera.hxx>
+#include "../services/FrameMetrics.hxx"
 
 #ifdef USE_AUDIO
 #include "../services/AudioMixer.hxx"
@@ -22,6 +23,7 @@
 
 #include <cmath>
 #include <array>
+#include <cstdio>
 
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
@@ -213,6 +215,106 @@ void UIManager::drawUI()
     ui::Text("%s", m_fpsCounter.c_str());
     ui::SameLine();
     ui::Checkbox("debug", &m_showDebugMenu);
+    ui::End();
+  }
+
+  // ── Developer debug overlay (toggle: F3 or the "debug" checkbox) ──────────
+  if (m_showDebugMenu)
+  {
+    const FrameMetrics &fm = FrameMetrics::instance();
+
+    // Anchor to the top-right corner with a fixed width.
+    const ImGuiIO &io = ui::GetIO();
+    constexpr float overlayW = 280.f;
+    constexpr float overlayH = 200.f;
+    constexpr float margin   = 10.f;
+    ui::SetNextWindowPos(ImVec2(io.DisplaySize.x - overlayW - margin, margin), ImGuiCond_Always);
+    ui::SetNextWindowSize(ImVec2(overlayW, overlayH), ImGuiCond_Always);
+    ui::SetNextWindowBgAlpha(0.80f);
+
+    bool dbgOpen = true;
+    ui::Begin("##debug_overlay", &dbgOpen,
+              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
+                  ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
+                  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoFocusOnAppearing |
+                  ImGuiWindowFlags_NoNav);
+
+    // Header
+    ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.85f, 1.00f, 1.00f));
+    ui::TextUnformatted("  \xe2\x9a\x99 Performance Debug Overlay");
+    ui::PopStyleColor();
+    ui::Separator();
+
+    // Thresholds and colours for the frame-time indicator.
+    // 60 FPS = 16.7 ms/frame; 30 FPS = 33.3 ms/frame.
+    constexpr float TARGET_60FPS_MS    = 16.7f;
+    constexpr float TARGET_30FPS_MS    = 33.3f;
+    // UI is expected to consume at most ~1/6th of the total frame budget,
+    // so multiply uiMs by 6 before passing to frameColour to get a comparable scale.
+    constexpr float UI_BUDGET_SCALE    = 6.f;
+    constexpr ImVec4 COL_PERF_GOOD     = {0.24f, 0.82f, 0.40f, 1.00f}; // green
+    constexpr ImVec4 COL_PERF_WARN     = {0.97f, 0.80f, 0.20f, 1.00f}; // yellow
+    constexpr ImVec4 COL_PERF_BAD      = {0.95f, 0.28f, 0.22f, 1.00f}; // red
+    constexpr ImVec4 COL_LABEL         = {0.60f, 0.65f, 0.72f, 1.00f}; // muted
+
+    // Metrics rows
+    const auto printRow = [&COL_LABEL](const char *label, float valueMs, ImVec4 colour)
+    {
+      ui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
+      ui::Text("  %-10s", label);
+      ui::PopStyleColor();
+      ui::SameLine(120.f);
+      ui::PushStyleColor(ImGuiCol_Text, colour);
+      char buf[32];
+      std::snprintf(buf, sizeof(buf), "%.2f ms", valueMs);
+      ui::TextUnformatted(buf);
+      ui::PopStyleColor();
+    };
+
+    // Returns a colour indicating whether a frame-time is within budget.
+    const auto frameColour = [&](float ms) -> ImVec4
+    {
+      if (ms < TARGET_60FPS_MS) return COL_PERF_GOOD;
+      if (ms < TARGET_30FPS_MS) return COL_PERF_WARN;
+      return COL_PERF_BAD;
+    };
+
+    // FPS
+    ui::PushStyleColor(ImGuiCol_Text, COL_LABEL);
+    ui::TextUnformatted("  FPS");
+    ui::PopStyleColor();
+    ui::SameLine(120.f);
+    ui::PushStyleColor(ImGuiCol_Text, frameColour(fm.lastFrameMs()));
+    char fpsBuf[16];
+    std::snprintf(fpsBuf, sizeof(fpsBuf), "%.1f", fm.avgFPS());
+    ui::TextUnformatted(fpsBuf);
+    ui::PopStyleColor();
+
+    printRow("Frame",  fm.lastFrameMs(), frameColour(fm.lastFrameMs()));
+    printRow("UI",     fm.lastUIMs(),    frameColour(fm.lastUIMs() * UI_BUDGET_SCALE));
+    printRow("Peak",   fm.peakFrameMs(), frameColour(fm.peakFrameMs()));
+
+    ui::Spacing();
+
+    // Frame-time history graph
+    ui::PushStyleColor(ImGuiCol_PlotLines,      ImVec4(0.30f, 0.65f, 1.00f, 1.00f));
+    ui::PushStyleColor(ImGuiCol_PlotLinesFill,  ImVec4(0.15f, 0.18f, 0.24f, 1.00f));
+    ui::PushStyleColor(ImGuiCol_FrameBg,        ImVec4(0.12f, 0.14f, 0.18f, 0.95f));
+
+    const auto &hist   = fm.frameHistory();
+    char graphLabel[32];
+    std::snprintf(graphLabel, sizeof(graphLabel), "%.1f ms", fm.lastFrameMs());
+    ui::PlotLines("##framegraph", hist.data(), FrameMetrics::HISTORY_SIZE,
+                  fm.frameHistoryOffset(), graphLabel,
+                  0.f, 50.f, ImVec2(-1.f, 50.f));
+    ui::PopStyleColor(3);
+
+    // Active UI state
+    ui::Spacing();
+    ui::PushStyleColor(ImGuiCol_Text, ImVec4(0.60f, 0.65f, 0.72f, 1.00f));
+    ui::Text("  Menus open: %d", static_cast<int>(m_menuStack.size()));
+    ui::PopStyleColor();
+
     ui::End();
   }
 }

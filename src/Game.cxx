@@ -22,6 +22,7 @@
 #include <PolicyEngine.hxx>
 #include <BudgetSystem.hxx>
 #include "services/FeatureFlags.hxx"
+#include "services/FrameMetrics.hxx"
 #include "engine/GameObjects/MapNode.hxx"
 #include "engine/common/enums.hxx"
 
@@ -153,6 +154,9 @@ void Game::run(bool SkipMenu)
   Uint32 fpsLastTime = SDL_GetTicks();
   Uint32 fpsFrames = 0;
 
+  // High-resolution frame timing (used by the debug overlay).
+  const Uint64 perfFreq = SDL_GetPerformanceFrequency();
+
   uiManager.addPersistentMenu<GameTimeMenu>();
   uiManager.addPersistentMenu<BuildMenu>();
 
@@ -226,6 +230,8 @@ void Game::run(bool SkipMenu)
 #ifdef MICROPROFILE_ENABLED
     MICROPROFILE_SCOPEI("Map", "Gameloop", MP_GREEN);
 #endif
+    const Uint64 frameStart = SDL_GetPerformanceCounter();
+
     SDL_RenderClear(WindowManager::instance().getRenderer());
 
     evManager.checkEvents(event);
@@ -239,17 +245,25 @@ void Game::run(bool SkipMenu)
 
     // render the ui
     // TODO: This is only temporary until the new UI is ready. Remove this afterwards
+    const Uint64 uiStart = SDL_GetPerformanceCounter();
     if (GameStates::instance().drawUI)
     {
       WindowManager::instance().newImGuiFrame();
       uiManager.drawUI();
     }
+    const float uiMs = static_cast<float>(SDL_GetPerformanceCounter() - uiStart) * 1000.f / static_cast<float>(perfFreq);
+
 #ifdef USE_ANGELSCRIPT
     ScriptEngine::instance().framestep(1);
 #endif
 
     // we need to instantiate the MapFunctions object so it's ready for new game
     WindowManager::instance().renderScreen();
+
+    // Record frame timing for the debug overlay.
+    const float frameMs =
+        static_cast<float>(SDL_GetPerformanceCounter() - frameStart) * 1000.f / static_cast<float>(perfFreq);
+    FrameMetrics::instance().recordFrame(frameMs, uiMs);
 
     fpsFrames++;
 

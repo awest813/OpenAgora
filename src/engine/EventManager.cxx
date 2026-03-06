@@ -141,6 +141,9 @@ void EventManager::checkEvents(SDL_Event &event)
       case SDLK_F11:
         uiManager.toggleDebugMenu();
         break;
+      case SDLK_F3:
+        uiManager.toggleDebugMenu();
+        break;
       case SDLK_1:
         MapLayers::toggleLayer(Layer::TERRAIN);
         break;
