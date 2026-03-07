@@ -141,6 +141,8 @@ void GovernanceSystem::reset()
   m_policyConstrained = false;
   m_lostElection = false;
   m_checkpointPending = false;
+  m_taxEfficiencyMultiplier = 1.f;
+  m_incomeModifier = 1.f;
   m_notifications.clear();
 
   for (auto &eventDef : m_events)
@@ -253,15 +255,33 @@ bool GovernanceSystem::applyEffectToApproval(const GovernanceEffect &effect, flo
 bool GovernanceSystem::applyEffectToGovernanceState(const GovernanceEffect &effect)
 {
   const std::string key = normalizedKey(effect.target);
-  if (key != "policylockmonths" && key != "policylock")
-    return false;
+  if (key == "policylockmonths" || key == "policylock")
+  {
+    float lockMonths = static_cast<float>(m_policyLockMonthsRemaining);
+    if (!applyNumericOp(lockMonths, effect.op, effect.value))
+      return false;
 
-  float lockMonths = static_cast<float>(m_policyLockMonthsRemaining);
-  if (!applyNumericOp(lockMonths, effect.op, effect.value))
-    return false;
+    m_policyLockMonthsRemaining = std::max(0, static_cast<int>(std::round(lockMonths)));
+    return true;
+  }
 
-  m_policyLockMonthsRemaining = std::max(0, static_cast<int>(std::round(lockMonths)));
-  return true;
+  if (key == "taxefficiency")
+  {
+    if (!applyNumericOp(m_taxEfficiencyMultiplier, effect.op, effect.value))
+      return false;
+    m_taxEfficiencyMultiplier = std::max(0.1f, std::min(2.f, m_taxEfficiencyMultiplier));
+    return true;
+  }
+
+  if (key == "medianincome" || key == "income")
+  {
+    if (!applyNumericOp(m_incomeModifier, effect.op, effect.value))
+      return false;
+    m_incomeModifier = std::max(0.1f, std::min(2.f, m_incomeModifier));
+    return true;
+  }
+
+  return false;
 }
 
 void GovernanceSystem::tickMonth(const CityIndicesData &indices)
@@ -293,8 +313,19 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
   // rather than approval alone, but still honour the per-event trigger check.
   if (m_eventSystemEnabled)
   {
+    const float distressMin = std::min({adjustedIndices.affordability,
+                                        adjustedIndices.safety,
+                                        adjustedIndices.jobs,
+                                        adjustedIndices.commute,
+                                        adjustedIndices.pollution,
+                                        approvalValue});
+    const bool allowEventEvaluation = distressMin <= m_eventThreshold;
+
     for (auto &eventDef : m_events)
     {
+      if (!allowEventEvaluation)
+        continue;
+
       if (eventDef.monthsUntilReady > 0)
         continue;
 

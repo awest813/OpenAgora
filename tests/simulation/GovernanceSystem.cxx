@@ -132,3 +132,58 @@ TEST_CASE("Event cooldown prevents repeated monthly triggering", "[simulation][g
   CHECK(governance.approval() == Approx(40.f));
   CHECK(governance.recentNotifications().size() == 2);
 }
+
+TEST_CASE("Governance event effects can modify tax efficiency multiplier", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 100.f, 15.f, 3, true, false);
+  governance.reset();
+
+  GovernanceEventDefinition eventDef;
+  eventDef.id = "tax_efficiency_test";
+  eventDef.trigger.index = "affordabilityIndex";
+  eventDef.trigger.op = "lt";
+  eventDef.trigger.value = 60.f;
+  eventDef.cooldownMonths = 1;
+  eventDef.effects = {GovernanceEffect{"taxEfficiency", "multiply", 0.8f}};
+  governance.addEventDefinition(eventDef);
+
+  CityIndicesData indices;
+  indices.affordability = 50.f;
+  indices.safety = 50.f;
+  indices.jobs = 50.f;
+  indices.commute = 50.f;
+  indices.pollution = 50.f;
+
+  governance.tickMonth(indices);
+  CHECK(governance.taxEfficiencyMultiplier() == Approx(0.8f));
+}
+
+TEST_CASE("Governance event threshold gates event evaluation", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 20.f, 15.f, 3, true, false);
+  governance.reset();
+
+  GovernanceEventDefinition eventDef;
+  eventDef.id = "threshold_gate_test";
+  eventDef.trigger.index = "jobsIndex";
+  eventDef.trigger.op = "lt";
+  eventDef.trigger.value = 80.f;
+  eventDef.cooldownMonths = 1;
+  eventDef.notification = "Should not trigger while city is healthy.";
+  eventDef.effects = {GovernanceEffect{"publicTrust", "add", -20.f}};
+  governance.addEventDefinition(eventDef);
+
+  CityIndicesData healthy;
+  healthy.affordability = 85.f;
+  healthy.safety = 85.f;
+  healthy.jobs = 85.f;
+  healthy.commute = 85.f;
+  healthy.pollution = 85.f;
+
+  governance.tickMonth(healthy);
+  CHECK(governance.recentNotifications().empty());
+}

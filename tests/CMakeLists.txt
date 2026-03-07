@@ -33,6 +33,7 @@ LIST(APPEND TEST_SOURCES
         simulation/CityIndices.cxx
         simulation/AffordabilityModel.cxx
         simulation/PolicyEngine.cxx
+        simulation/PolicyEngineV2.cxx
         simulation/BudgetSystem.cxx
         simulation/SimulationContext.cxx
         simulation/EconomyDepthModel.cxx

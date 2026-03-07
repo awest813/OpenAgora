@@ -3,12 +3,29 @@
 
 #include <PolicyEngine.hxx>
 #include <BudgetSystem.hxx>
+#include <GovernanceSystem.hxx>
 
 #include "imgui.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <map>
+#include <string>
+#include <vector>
 
 namespace ui = ImGui;
+
+namespace
+{
+int costForLevel(const PolicyDefinition &definition, int level)
+{
+  const auto it = std::find_if(definition.levels.begin(), definition.levels.end(),
+                               [level](const PolicyLevelDefinition &entry) { return entry.level == level; });
+  if (it == definition.levels.end())
+    return definition.costPerMonth;
+  return it->costPerMonth;
+}
+} // namespace
 
 // ── draw() ────────────────────────────────────────────────────────────────────
 
@@ -17,11 +34,8 @@ void PolicyPanel::draw() const
   const auto &definitions = PolicyEngine::instance().definitions();
   const int   policyCount = static_cast<int>(definitions.size());
 
-  // Dynamically size the panel to fit all policies (min 1 row).
-  constexpr float panelWidth   = 260.f;
-  constexpr float headerHeight = 80.f;  // title + budget summary
-  constexpr float rowHeight    = 38.f;  // per-policy row
-  const float     panelHeight  = headerHeight + std::max(1, policyCount) * rowHeight + 12.f;
+  constexpr float panelWidth   = 340.f;
+  constexpr float panelHeight  = 360.f;
 
   // Sits to the right of the left-side panels (which end at ~480 in y).
   const ImVec2 panelPos{6.f, 480.f};
@@ -34,7 +48,7 @@ void PolicyPanel::draw() const
 
   const ImGuiWindowFlags flags =
       ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
-      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration;
+      ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDecoration;
 
   bool open = true;
   if (!ui::Begin("##policy_panel", &open, flags))
@@ -79,28 +93,76 @@ void PolicyPanel::draw() const
   else
   {
     PolicyEngine &policyEngine = PolicyEngine::instance();
+    const float approval = GovernanceSystem::instance().approval();
+
+    std::map<std::string, std::vector<const PolicyDefinition *>> grouped;
+    for (const auto &def : definitions)
+      grouped[def.category.empty() ? std::string{"general"} : def.category].push_back(&def);
 
     UITheme::pushButtonStyle();
-    for (const auto &def : definitions)
+    ui::BeginChild("policy_scroll_region", ImVec2(0.f, 0.f), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    for (const auto &group : grouped)
     {
-      bool active = policyEngine.isActive(def.id);
+      ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_HEADER_TEXT);
+      ui::TextUnformatted(group.first.c_str());
+      ImGui::PopStyleColor();
+      ui::Separator();
 
-      // Checkbox label is the policy name
-      if (ui::Checkbox(def.label.c_str(), &active))
-        policyEngine.setActive(def.id, active);
-
-      if (ui::IsItemHovered())
-        ui::SetTooltip("%s", def.description.c_str());
-
-      // Show monthly cost on the same line, right-aligned
-      if (def.costPerMonth > 0)
+      for (const PolicyDefinition *def : group.second)
       {
+        int level = policyEngine.policyLevel(def->id);
+        const int maxLevel = policyEngine.maxLevel(def->id);
+        const int currentCost = (level > 0) ? costForLevel(*def, level) : 0;
+
+        ui::TextUnformatted(def->label.c_str());
+        if (ui::IsItemHovered())
+          ui::SetTooltip("%s", def->description.c_str());
+
         ui::SameLine();
-        ImGui::PushStyleColor(ImGuiCol_Text, active ? UITheme::COL_YELLOW : UITheme::COL_TEXT_DISABLED);
-        ui::Text("-%d/mo", def.costPerMonth);
+        ImGui::PushStyleColor(ImGuiCol_Text, level > 0 ? UITheme::COL_YELLOW : UITheme::COL_TEXT_DISABLED);
+        ui::Text(level > 0 ? "-%d/mo" : "inactive", currentCost);
         ImGui::PopStyleColor();
+
+        int requestedLevel = level;
+        const std::string controlLabel = "##policy_level_" + def->id;
+
+        bool changed = false;
+        if (maxLevel <= 1)
+        {
+          bool enabled = level > 0;
+          changed = ui::Checkbox(controlLabel.c_str(), &enabled);
+          requestedLevel = enabled ? 1 : 0;
+        }
+        else
+        {
+          changed = ui::SliderInt(controlLabel.c_str(), &requestedLevel, 0, maxLevel);
+        }
+
+        if (changed)
+        {
+          PolicyAvailability availability = policyEngine.availability(def->id, requestedLevel, approval);
+          if (availability.available)
+          {
+            policyEngine.setPolicyLevel(def->id, requestedLevel);
+          }
+          else
+          {
+            policyEngine.setPolicyLevel(def->id, level);
+          }
+        }
+
+        PolicyAvailability nextAvailability = policyEngine.availability(def->id, std::min(maxLevel, level + 1), approval);
+        if (!nextAvailability.available && level < maxLevel)
+        {
+          ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_DISABLED);
+          ui::TextWrapped("%s", nextAvailability.reason.c_str());
+          ImGui::PopStyleColor();
+        }
+
+        ui::Spacing();
       }
     }
+    ui::EndChild();
     UITheme::popButtonStyle();
   }
 

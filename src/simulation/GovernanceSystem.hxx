@@ -71,6 +71,8 @@ public:
   bool policyConstrained() const { return m_policyConstrained; }
   bool lostElection() const { return m_lostElection; }
   bool checkpointPending() const { return m_checkpointPending; }
+  float taxEfficiencyMultiplier() const { return m_taxEfficiencyMultiplier; }
+  float incomeModifier() const { return m_incomeModifier; }
   int monthsUntilCheckpoint() const;
   int monthCounter() const { return m_totalMonthsElapsed; }
   int maxSelectablePolicies() const { return m_policyConstrained ? 1 : 2; }
@@ -122,6 +124,8 @@ private:
   bool m_policyConstrained = false;
   bool m_lostElection = false;
   bool m_checkpointPending = false;
+  float m_taxEfficiencyMultiplier = 1.f;
+  float m_incomeModifier = 1.f;
 
   std::vector<GovernanceEventDefinition> m_events;
   std::vector<GovernancePolicyOption> m_policyOptions;

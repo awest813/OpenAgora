@@ -2,11 +2,29 @@
   "id": "affordable_housing_fund",
   "label": "Affordable Housing Fund",
   "description": "Diverts budget to subsidise below-market housing, reducing displacement pressure and improving the affordability index.",
+  "category": "housing",
   "type": "budget_sink",
   "cost_per_month": 500,
-  "effects": [
-    { "target": "displacementPressure", "op": "add",      "value": -5.0 },
-    { "target": "affordabilityIndex",   "op": "add",      "value":  8.0 }
+  "min_approval": 20,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 500,
+      "effects": [
+        { "target": "displacementPressure", "op": "add", "value": -5.0 },
+        { "target": "affordabilityIndex", "op": "add", "value": 8.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 900,
+      "unlock_min_approval": 45,
+      "effects": [
+        { "target": "displacementPressure", "op": "add", "value": -9.0 },
+        { "target": "affordabilityIndex", "op": "add", "value": 14.0 },
+        { "target": "taxEfficiency", "op": "add", "value": -0.05 }
+      ]
+    }
   ],
   "ui_slider": { "min": 0, "max": 2000, "step": 100 }
 }
