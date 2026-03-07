@@ -16,11 +16,16 @@
 #include "../game/ui/GovernancePanel.hxx"
 #include "../game/ui/PolicyPanel.hxx"
 #include "../game/ui/NotificationOverlay.hxx"
+#include "../game/ui/EconomyPanel.hxx"
+#include "../game/ui/EventLogPanel.hxx"
 #include <CityIndices.hxx>
 #include <GovernanceSystem.hxx>
 #include <AffordabilityModel.hxx>
 #include <PolicyEngine.hxx>
 #include <BudgetSystem.hxx>
+#include <EconomyDepthModel.hxx>
+#include <ServiceStrainModel.hxx>
+#include <SimulationContext.hxx>
 #include "services/FeatureFlags.hxx"
 #include "services/FrameMetrics.hxx"
 #include "engine/GameObjects/MapNode.hxx"
@@ -203,10 +208,32 @@ void Game::run(bool SkipMenu)
     uiManager.addPersistentMenu<NotificationOverlay>();
   }
 
+  if (featureFlags.economyPanel())
+  {
+    uiManager.addPersistentMenu<EconomyPanel>();
+  }
+
+  if (featureFlags.eventLogPanel())
+  {
+    uiManager.addPersistentMenu<EventLogPanel>();
+  }
+
   if (featureFlags.budgetSystem())
   {
     BudgetSystem::instance().reset();
   }
+
+  if (featureFlags.economyDepthModel())
+  {
+    EconomyDepthModel::instance().reset();
+  }
+
+  if (featureFlags.serviceStrainModel())
+  {
+    ServiceStrainModel::instance().reset();
+  }
+
+  SimulationContext::instance().reset();
 
   if (needsCityIndices)
   {
@@ -293,6 +320,9 @@ void Game::newGame(bool generateTerrain)
   m_GamePlay.resetManagers();
   GovernanceSystem::instance().reset();
   BudgetSystem::instance().reset();
+  EconomyDepthModel::instance().reset();
+  ServiceStrainModel::instance().reset();
+  SimulationContext::instance().reset();
 }
 
 void Game::loadGame(const std::string &fileName)
@@ -301,6 +331,9 @@ void Game::loadGame(const std::string &fileName)
   m_GamePlay.resetManagers();
   GovernanceSystem::instance().reset();
   BudgetSystem::instance().reset();
+  EconomyDepthModel::instance().reset();
+  ServiceStrainModel::instance().reset();
+  SimulationContext::instance().reset();
 }
 
 } // namespace Cytopia

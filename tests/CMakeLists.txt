@@ -34,6 +34,9 @@ LIST(APPEND TEST_SOURCES
         simulation/AffordabilityModel.cxx
         simulation/PolicyEngine.cxx
         simulation/BudgetSystem.cxx
+        simulation/SimulationContext.cxx
+        simulation/EconomyDepthModel.cxx
+        simulation/ServiceStrainModel.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx

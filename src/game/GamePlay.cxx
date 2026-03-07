@@ -3,8 +3,11 @@
 #include "AffordabilityModel.hxx"
 #include "BudgetSystem.hxx"
 #include "CityIndices.hxx"
+#include "EconomyDepthModel.hxx"
 #include "GovernanceSystem.hxx"
 #include "PolicyEngine.hxx"
+#include "ServiceStrainModel.hxx"
+#include "SimulationContext.hxx"
 #include "../services/FeatureFlags.hxx"
 #include "LOG.hxx"
 #include "enums.hxx"
@@ -17,6 +20,8 @@ void GamePlay::resetManagers()
 
 void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
 {
+  SimulationContext::instance().advanceMonth();
+
   // ── Collect tile snapshots ─────────────────────────────────────────────────
   std::vector<const TileData *> buildingTiles;
   int roadTileCount  = 0;
@@ -43,6 +48,8 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
   }
 
   CityIndicesData indices = CityIndices::instance().current();
+  float policyExpenses = 0.f;
+  float approval = 50.f;
 
   // ── PolicyEngine ───────────────────────────────────────────────────────────
   // When the json_content_pipeline flag is off, policies are not loaded and
@@ -85,7 +92,7 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
     GovernanceSystem::instance().tickMonth(indices);
 
     // Apply approval-driven zone growth rate (DESIGN.md §4.5).
-    const float approval = GovernanceSystem::instance().approval();
+    approval = GovernanceSystem::instance().approval();
     float growthRate = 1.0f;
     if (approval >= 85.f)
       growthRate = 1.20f;
@@ -94,6 +101,11 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
     else if (approval < 30.f)
       growthRate = 0.90f;
     m_ZoneManager.setGrowthRateMultiplier(growthRate);
+
+    SimulationContextData &ctx = SimulationContext::instance().mutableData();
+    ctx.growthRateModifier = growthRate;
+    ctx.approvalMultiplier = (approval > 70.f) ? 1.10f : ((approval < 30.f) ? 0.80f : 1.00f);
+    ctx.taxEfficiency = ctx.approvalMultiplier;
   }
 
   // ── BudgetSystem ───────────────────────────────────────────────────────────
@@ -105,7 +117,6 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
       totalInhabitants += tile->inhabitants;
 
     // Determine policy expenses: run the real tick now (post-affordability)
-    float policyExpenses = 0.f;
     if (flags.jsonContentPipeline())
     {
       AffordabilityState affCopy = AffordabilityModel::instance().state();
@@ -113,8 +124,35 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
       policyExpenses = static_cast<float>(PolicyEngine::instance().tick(affCopy, idxCopy));
     }
 
-    const float approval = flags.governanceLayer() ? GovernanceSystem::instance().approval() : 50.f;
+    approval = flags.governanceLayer() ? GovernanceSystem::instance().approval() : 50.f;
     BudgetSystem::instance().tick(totalInhabitants, policyExpenses, approval);
+  }
+
+  // ── EconomyDepthModel ──────────────────────────────────────────────────────
+  if (flags.economyDepthModel())
+  {
+    const float runningBalance = flags.budgetSystem() ? BudgetSystem::instance().currentBalance() : 0.f;
+    EconomyDepthModel::instance().tick(buildingTiles, indices, runningBalance, policyExpenses, approval);
+
+    const EconomyDepthState &economy = EconomyDepthModel::instance().state();
+    SimulationContextData &ctx = SimulationContext::instance().mutableData();
+    ctx.unemploymentPressure = economy.unemploymentPressure;
+    ctx.wagePressure         = economy.wagePressure;
+    ctx.businessConfidence   = economy.businessConfidence;
+    ctx.debtStress           = economy.debtStress;
+  }
+
+  // ── ServiceStrainModel ─────────────────────────────────────────────────────
+  if (flags.serviceStrainModel())
+  {
+    ServiceStrainModel::instance().tick(buildingTiles, roadTileCount, totalTiles, indices);
+
+    const ServiceStrainState &services = ServiceStrainModel::instance().state();
+    SimulationContextData &ctx = SimulationContext::instance().mutableData();
+    ctx.transitReliability    = services.transitReliability;
+    ctx.safetyCapacityLoad    = services.safetyCapacityLoad;
+    ctx.educationAccessStress = services.educationAccessStress;
+    ctx.healthAccessStress    = services.healthAccessStress;
   }
 
   // ── Population churn ───────────────────────────────────────────────────────

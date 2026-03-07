@@ -39,6 +39,10 @@ void FeatureFlags::readFile()
   m_budgetSystem         = j.value("budget_system",           false);
   m_policyPanel          = j.value("policy_panel",            false);
   m_notificationOverlay  = j.value("notification_overlay",    false);
+  m_economyDepthModel    = j.value("economy_depth_model",     false);
+  m_serviceStrainModel   = j.value("service_strain_model",    false);
+  m_economyPanel         = j.value("economy_panel",           false);
+  m_eventLogPanel        = j.value("event_log_panel",         false);
   m_governanceCheckpointMonths = j.value("governance_checkpoint_months", 6);
   m_governanceConstraintThreshold = j.value("governance_constraint_threshold", 40.f);
   m_governanceEventThreshold = j.value("governance_event_threshold", 30.f);
@@ -56,6 +60,10 @@ void FeatureFlags::readFile()
                 << " budget="        << m_budgetSystem
                 << " policyPanel="   << m_policyPanel
                 << " notifications=" << m_notificationOverlay
+                << " economyDepth="  << m_economyDepthModel
+                << " serviceStrain=" << m_serviceStrainModel
+                << " economyPanel="  << m_economyPanel
+                << " eventLogPanel=" << m_eventLogPanel
                 << " checkpointMonths=" << m_governanceCheckpointMonths
                 << " constraintThreshold=" << m_governanceConstraintThreshold
                 << " eventThreshold=" << m_governanceEventThreshold

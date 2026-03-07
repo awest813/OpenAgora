@@ -62,6 +62,18 @@ public:
   /// Toast-style notification overlay for governance events.
   bool notificationOverlay() const { return m_notificationOverlay; }
 
+  /// Extended economic simulation layer (employment, debt stress, confidence).
+  bool economyDepthModel() const { return m_economyDepthModel; }
+
+  /// Extended service simulation layer (transit/safety/education/health strain).
+  bool serviceStrainModel() const { return m_serviceStrainModel; }
+
+  /// Economy analysis panel showing deeper city-economic indicators.
+  bool economyPanel() const { return m_economyPanel; }
+
+  /// Scrollable full governance event log panel.
+  bool eventLogPanel() const { return m_eventLogPanel; }
+
   /// Governance checkpoint interval in in-game months.
   int governanceCheckpointMonths() const { return m_governanceCheckpointMonths; }
 
@@ -91,6 +103,10 @@ private:
   bool m_budgetSystem         = false;
   bool m_policyPanel          = false;
   bool m_notificationOverlay  = false;
+  bool m_economyDepthModel    = false;
+  bool m_serviceStrainModel   = false;
+  bool m_economyPanel         = false;
+  bool m_eventLogPanel        = false;
 
   int m_governanceCheckpointMonths = 6;
   float m_governanceConstraintThreshold = 40.f;

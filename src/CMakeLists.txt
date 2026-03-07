@@ -27,6 +27,9 @@ set(SOURCE_FILES
         simulation/AffordabilityModel.{hxx,cxx}
         simulation/PolicyEngine.{hxx,cxx}
         simulation/BudgetSystem.{hxx,cxx}
+        simulation/SimulationContext.{hxx,cxx}
+        simulation/EconomyDepthModel.{hxx,cxx}
+        simulation/ServiceStrainModel.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}
@@ -68,6 +71,8 @@ set(SOURCE_FILES
         game/ui/GovernancePanel.{hxx,cxx}
         game/ui/PolicyPanel.{hxx,cxx}
         game/ui/NotificationOverlay.{hxx,cxx}
+        game/ui/EconomyPanel.{hxx,cxx}
+        game/ui/EventLogPanel.{hxx,cxx}
         game/ui/UITheme.hxx
         engine/render/AffordabilityOverlay.{hxx,cxx}
         )
