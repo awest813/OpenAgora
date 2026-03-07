@@ -50,15 +50,16 @@ and pollution. Residents react. Elections loom. Build a city people actually wan
 
 ## Roadmap
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full phased plan.
+See [`docs/GAMEPLAY_ROADMAP.md`](docs/GAMEPLAY_ROADMAP.md) for the player-facing feature plan,
+or [`docs/ROADMAP.md`](docs/ROADMAP.md) for the technical implementation phases.
 
-| Phase | Status | Summary |
-|-------|--------|---------|
-| Phase 0 – Fork hygiene | ✅ Complete | Feature flags, architecture scaffolding, docs |
-| Phase 1 – Housing Affordability | ✅ Complete | Full affordability loop + heatmap overlay |
-| Phase 2 – Governance Layer | 🔄 Core complete | Public trust, events, council checkpoints |
-| Phase 2.5 – Economy Foundation | ✅ Complete | Budget system with approval multipliers |
-| Phase 3 – Original IP Conversion | 🔲 Ongoing | New art, audio, lore, and branding |
+| Milestone | Version | Status | Theme |
+|-----------|---------|--------|-------|
+| Proof of Concept | v0.4 | ✅ Playable | Policy sandbox — indices, policies, events, council |
+| The Living City | v0.5 | 🔄 In progress | Economy multipliers wired to zone growth, scenarios |
+| Politics Matters | v0.6 | 🔲 Planned | Stakeholder reactions, policy unlock tree, win/loss |
+| Narrative & Factions | v0.7 | 🔲 Planned | Advisor character, factions, campaign chain |
+| Original IP Launch | v1.0 | 🔲 Planned | Original art, audio, lore, tutorial, mod support |
 
 ---
 

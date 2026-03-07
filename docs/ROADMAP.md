@@ -3,6 +3,9 @@
 > Fork of [Cytopia](https://github.com/CytopiaTeam/Cytopia) being evolved into a
 > policy-driven city simulation where governance mechanics *are* the gameplay.
 
+This document tracks **technical implementation phases**.  
+For the **player-facing feature plan** see [`GAMEPLAY_ROADMAP.md`](GAMEPLAY_ROADMAP.md).
+
 ---
 
 ## Current State of the Fork
