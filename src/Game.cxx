@@ -25,6 +25,7 @@
 #include <BudgetSystem.hxx>
 #include <EconomyDepthModel.hxx>
 #include <ServiceStrainModel.hxx>
+#include <ScenarioCatalog.hxx>
 #include <SimulationContext.hxx>
 #include "services/FeatureFlags.hxx"
 #include "services/FrameMetrics.hxx"
@@ -196,6 +197,7 @@ void Game::run(bool SkipMenu)
   if (jsonPipelineEnabled)
   {
     PolicyEngine::instance().loadPolicies();
+    ScenarioCatalog::instance().loadScenarios();
   }
 
   if (featureFlags.policyPanel())

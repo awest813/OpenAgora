@@ -1,0 +1,39 @@
+{
+  "id": "fiscal_crunch",
+  "trigger": { "index": "publicTrust", "op": "lt", "value": 50 },
+  "cooldown_months": 10,
+  "notification": "The treasury warns of a fiscal crunch. The council demands an immediate response.",
+  "choices": [
+    {
+      "id": "raise_taxes",
+      "label": "Raise Taxes",
+      "description": "Stabilise finances quickly, but risk public backlash.",
+      "budget_cost": 0,
+      "effects": [
+        { "target": "taxEfficiency", "op": "add", "value": 0.15 },
+        { "target": "publicTrust", "op": "add", "value": -6.0 }
+      ]
+    },
+    {
+      "id": "austerity_cuts",
+      "label": "Austerity Cuts",
+      "description": "Reduce spending now, but services will suffer.",
+      "budget_cost": 0,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": -6.0 },
+        { "target": "commuteIndex", "op": "add", "value": -4.0 },
+        { "target": "publicTrust", "op": "add", "value": -4.0 }
+      ]
+    },
+    {
+      "id": "bond_issue",
+      "label": "Issue Emergency Bonds",
+      "description": "Keep services running by borrowing at a premium.",
+      "budget_cost": 1200,
+      "effects": [
+        { "target": "publicTrust", "op": "add", "value": 2.0 },
+        { "target": "debtStress", "op": "add", "value": 8.0 }
+      ]
+    }
+  ]
+}

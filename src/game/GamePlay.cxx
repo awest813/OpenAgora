@@ -134,6 +134,11 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
                                                                         &SimulationContext::instance().mutableData()));
     }
 
+    if (flags.governanceLayer())
+    {
+      policyExpenses += GovernanceSystem::instance().consumeBudgetAdjustment();
+    }
+
     approval = flags.governanceLayer() ? GovernanceSystem::instance().approval() : 50.f;
     const float budgetApproval =
         flags.governanceLayer()

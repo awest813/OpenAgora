@@ -29,6 +29,15 @@ struct GovernanceEventDefinition
   int cooldownMonths = 0;
   std::string notification;
   std::vector<GovernanceEffect> effects;
+  struct Choice
+  {
+    std::string id;
+    std::string label;
+    std::string description;
+    float budgetCost = 0.f;
+    std::vector<GovernanceEffect> effects;
+  };
+  std::vector<Choice> choices;
   int monthsUntilReady = 0;
 };
 
@@ -73,6 +82,10 @@ public:
   bool checkpointPending() const { return m_checkpointPending; }
   float taxEfficiencyMultiplier() const { return m_taxEfficiencyMultiplier; }
   float incomeModifier() const { return m_incomeModifier; }
+  bool hasPendingEventChoice() const { return m_hasPendingEventChoice; }
+  const GovernanceEventDefinition *pendingEventChoice() const;
+  bool choosePendingEventOption(const std::string &optionId);
+  float consumeBudgetAdjustment();
   int monthsUntilCheckpoint() const;
   int monthCounter() const { return m_totalMonthsElapsed; }
   int maxSelectablePolicies() const { return m_policyConstrained ? 1 : 2; }
@@ -126,6 +139,9 @@ private:
   bool m_checkpointPending = false;
   float m_taxEfficiencyMultiplier = 1.f;
   float m_incomeModifier = 1.f;
+  bool m_hasPendingEventChoice = false;
+  GovernanceEventDefinition m_pendingEventChoice;
+  float m_budgetAdjustment = 0.f;
 
   std::vector<GovernanceEventDefinition> m_events;
   std::vector<GovernancePolicyOption> m_policyOptions;

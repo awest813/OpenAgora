@@ -1,0 +1,30 @@
+{
+  "id": "congestion_pricing",
+  "label": "Congestion Pricing",
+  "description": "Charges peak-hour road usage in the city center to reduce traffic and fund transit improvements.",
+  "category": "transit",
+  "type": "tax_modifier",
+  "cost_per_month": 120,
+  "min_approval": 35,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 120,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 5.0 },
+        { "target": "pollutionIndex", "op": "add", "value": -4.0 },
+        { "target": "taxEfficiency", "op": "add", "value": 0.05 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 220,
+      "unlock_min_approval": 60,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 9.0 },
+        { "target": "pollutionIndex", "op": "add", "value": -7.0 },
+        { "target": "taxEfficiency", "op": "add", "value": 0.10 }
+      ]
+    }
+  ]
+}

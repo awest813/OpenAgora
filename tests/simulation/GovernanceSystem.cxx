@@ -187,3 +187,49 @@ TEST_CASE("Governance event threshold gates event evaluation", "[simulation][gov
   governance.tickMonth(healthy);
   CHECK(governance.recentNotifications().empty());
 }
+
+TEST_CASE("Governance supports choice-based events and budget adjustments", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 100.f, 15.f, 3, true, false);
+  governance.reset();
+
+  GovernanceEventDefinition eventDef;
+  eventDef.id = "choice_event";
+  eventDef.trigger.index = "affordabilityIndex";
+  eventDef.trigger.op = "lt";
+  eventDef.trigger.value = 60.f;
+  eventDef.cooldownMonths = 4;
+  eventDef.notification = "Choose a response.";
+
+  GovernanceEventDefinition::Choice choiceA;
+  choiceA.id = "option_a";
+  choiceA.label = "Option A";
+  choiceA.budgetCost = 500.f;
+  choiceA.effects = {GovernanceEffect{"publicTrust", "add", -5.f}};
+
+  GovernanceEventDefinition::Choice choiceB;
+  choiceB.id = "option_b";
+  choiceB.label = "Option B";
+  choiceB.effects = {GovernanceEffect{"taxEfficiency", "multiply", 1.1f}};
+
+  eventDef.choices = {choiceA, choiceB};
+  governance.addEventDefinition(eventDef);
+
+  CityIndicesData indices;
+  indices.affordability = 50.f;
+  indices.safety = 50.f;
+  indices.jobs = 50.f;
+  indices.commute = 50.f;
+  indices.pollution = 50.f;
+
+  governance.tickMonth(indices);
+  REQUIRE(governance.hasPendingEventChoice());
+  REQUIRE(governance.pendingEventChoice() != nullptr);
+  CHECK(governance.pendingEventChoice()->id == "choice_event");
+
+  CHECK(governance.choosePendingEventOption("option_a"));
+  CHECK_FALSE(governance.hasPendingEventChoice());
+  CHECK(governance.consumeBudgetAdjustment() == Approx(500.f));
+}

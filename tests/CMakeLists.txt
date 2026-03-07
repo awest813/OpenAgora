@@ -38,6 +38,8 @@ LIST(APPEND TEST_SOURCES
         simulation/SimulationContext.cxx
         simulation/EconomyDepthModel.cxx
         simulation/ServiceStrainModel.cxx
+        simulation/ScenarioCatalog.cxx
+        simulation/ContentValidation.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx

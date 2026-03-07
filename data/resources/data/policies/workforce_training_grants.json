@@ -1,0 +1,30 @@
+{
+  "id": "workforce_training_grants",
+  "label": "Workforce Training Grants",
+  "description": "Expands job retraining and placement pipelines to improve labor mobility and long-term incomes.",
+  "category": "economy",
+  "type": "service_boost",
+  "cost_per_month": 420,
+  "min_approval": 25,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 420,
+      "effects": [
+        { "target": "jobsIndex", "op": "add", "value": 6.0 },
+        { "target": "medianIncome", "op": "multiply", "value": 1.06 },
+        { "target": "unemploymentPressure", "op": "add", "value": -6.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 780,
+      "unlock_min_approval": 50,
+      "effects": [
+        { "target": "jobsIndex", "op": "add", "value": 10.0 },
+        { "target": "medianIncome", "op": "multiply", "value": 1.10 },
+        { "target": "unemploymentPressure", "op": "add", "value": -10.0 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "industrial_revival",
+  "label": "Industrial Revival",
+  "description": "A jobs-first agenda with high growth potential and elevated pollution risk.",
+  "starting_approval": 50,
+  "starting_balance": 3000,
+  "recommended_policies": [
+    "workforce_training_grants",
+    "congestion_pricing",
+    "clean_air_act"
+  ]
+}

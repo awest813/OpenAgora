@@ -125,6 +125,35 @@ void GovernanceSystem::loadEventDefinitions()
       }
     }
 
+    if (parsed.contains("choices") && parsed["choices"].is_array())
+    {
+      for (const auto &choiceJson : parsed["choices"])
+      {
+        if (!choiceJson.is_object())
+          continue;
+
+        GovernanceEventDefinition::Choice choice;
+        choice.id = choiceJson.value("id", std::string{});
+        choice.label = choiceJson.value("label", std::string{"Option"});
+        choice.description = choiceJson.value("description", std::string{});
+        choice.budgetCost = choiceJson.value("budget_cost", 0.f);
+
+        if (choiceJson.contains("effects") && choiceJson["effects"].is_array())
+        {
+          for (const auto &choiceEffectJson : choiceJson["effects"])
+          {
+            GovernanceEffect effect;
+            effect.target = choiceEffectJson.value("target", std::string{});
+            effect.op = choiceEffectJson.value("op", "add");
+            effect.value = choiceEffectJson.value("value", 0.f);
+            choice.effects.emplace_back(effect);
+          }
+        }
+
+        eventDef.choices.emplace_back(choice);
+      }
+    }
+
     m_events.emplace_back(eventDef);
   }
 
@@ -143,6 +172,9 @@ void GovernanceSystem::reset()
   m_checkpointPending = false;
   m_taxEfficiencyMultiplier = 1.f;
   m_incomeModifier = 1.f;
+  m_hasPendingEventChoice = false;
+  m_pendingEventChoice = GovernanceEventDefinition{};
+  m_budgetAdjustment = 0.f;
   m_notifications.clear();
 
   for (auto &eventDef : m_events)
@@ -338,6 +370,17 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
         pushNotification(eventDef.notification);
       }
 
+      if (!eventDef.choices.empty())
+      {
+        if (!m_hasPendingEventChoice)
+        {
+          m_hasPendingEventChoice = true;
+          m_pendingEventChoice = eventDef;
+          pushNotification("Decision required: " + eventDef.id);
+        }
+        continue;
+      }
+
       for (const auto &effect : eventDef.effects)
       {
         if (applyEffectToIndices(effect, adjustedIndices))
@@ -486,4 +529,56 @@ void GovernanceSystem::pushNotification(const std::string &message)
   {
     m_notifications.pop_front();
   }
+}
+
+const GovernanceEventDefinition *GovernanceSystem::pendingEventChoice() const
+{
+  return m_hasPendingEventChoice ? &m_pendingEventChoice : nullptr;
+}
+
+bool GovernanceSystem::choosePendingEventOption(const std::string &optionId)
+{
+  if (!m_hasPendingEventChoice)
+    return false;
+
+  const auto optionIt = std::find_if(m_pendingEventChoice.choices.begin(), m_pendingEventChoice.choices.end(),
+                                     [&optionId](const GovernanceEventDefinition::Choice &option)
+                                     { return option.id == optionId; });
+  if (optionIt == m_pendingEventChoice.choices.end())
+    return false;
+
+  CityIndicesData updatedIndices = m_lastIndices;
+  float approvalValue = m_approval;
+
+  for (const auto &effect : optionIt->effects)
+  {
+    if (applyEffectToIndices(effect, updatedIndices))
+    {
+      approvalValue = computeApproval(updatedIndices);
+      continue;
+    }
+    if (applyEffectToApproval(effect, approvalValue))
+    {
+      continue;
+    }
+    if (applyEffectToGovernanceState(effect))
+    {
+      continue;
+    }
+  }
+
+  m_lastIndices = updatedIndices;
+  m_approval = clamp100(approvalValue);
+  m_budgetAdjustment += std::max(0.f, optionIt->budgetCost);
+  m_hasPendingEventChoice = false;
+  pushNotification("Decision enacted: " + optionIt->label);
+  m_pendingEventChoice = GovernanceEventDefinition{};
+  return true;
+}
+
+float GovernanceSystem::consumeBudgetAdjustment()
+{
+  const float value = m_budgetAdjustment;
+  m_budgetAdjustment = 0.f;
+  return value;
 }

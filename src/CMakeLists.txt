@@ -30,6 +30,7 @@ set(SOURCE_FILES
         simulation/SimulationContext.{hxx,cxx}
         simulation/EconomyDepthModel.{hxx,cxx}
         simulation/ServiceStrainModel.{hxx,cxx}
+        simulation/ScenarioCatalog.{hxx,cxx}
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}

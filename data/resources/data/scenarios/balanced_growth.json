@@ -1,0 +1,12 @@
+{
+  "id": "balanced_growth",
+  "label": "Balanced Growth",
+  "description": "A moderate starting point with stable approval and manageable infrastructure pressure.",
+  "starting_approval": 55,
+  "starting_balance": 2500,
+  "recommended_policies": [
+    "affordable_housing_fund",
+    "community_policing",
+    "transit_priority_lanes"
+  ]
+}

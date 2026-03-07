@@ -119,6 +119,39 @@ void GovernancePanel::draw() const
     }
   }
 
+  // ── Pending event choices ─────────────────────────────────────────────────
+  if (governance.hasPendingEventChoice())
+  {
+    const GovernanceEventDefinition *pending = governance.pendingEventChoice();
+    if (pending)
+    {
+      ui::Spacing();
+      ui::Separator();
+      ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_ORANGE);
+      ui::Text("Decision Required: %s", pending->id.c_str());
+      ImGui::PopStyleColor();
+      if (!pending->notification.empty())
+      {
+        ui::TextWrapped("%s", pending->notification.c_str());
+      }
+
+      UITheme::pushButtonStyle();
+      for (const auto &choice : pending->choices)
+      {
+        if (ui::Button(choice.label.c_str(), ImVec2(-1.f, 0.f)))
+        {
+          governance.choosePendingEventOption(choice.id);
+        }
+        if (ui::IsItemHovered())
+        {
+          if (!choice.description.empty())
+            ui::SetTooltip("%s", choice.description.c_str());
+        }
+      }
+      UITheme::popButtonStyle();
+    }
+  }
+
   // ── Council checkpoint modal ──────────────────────────────────────────────
   if (governance.checkpointPending())
     ui::OpenPopup("Council Checkpoint");

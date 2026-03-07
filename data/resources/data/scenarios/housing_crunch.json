@@ -1,0 +1,12 @@
+{
+  "id": "housing_crunch",
+  "label": "Housing Crunch",
+  "description": "Strong population growth has outpaced housing supply, fueling displacement pressure.",
+  "starting_approval": 42,
+  "starting_balance": 1800,
+  "recommended_policies": [
+    "affordable_housing_fund",
+    "rent_control",
+    "upzoning_incentives"
+  ]
+}
