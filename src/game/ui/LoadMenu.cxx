@@ -100,6 +100,8 @@ void LoadMenu::draw() const
       m_filename = name;
       m_result   = e_delete_file;
     }
+    if (ui::IsItemHovered())
+      ui::SetTooltip("Permanently delete save file");
     ui::PopStyleColor(3);
   }
 
