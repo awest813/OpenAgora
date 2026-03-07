@@ -117,7 +117,7 @@ ctest --output-on-failure
 ./OpenAgora_Tests "[simulation]"
 ```
 
-58 simulation-layer unit tests cover city indices, affordability, policy/governance depth,
+61 simulation-layer unit tests cover city indices, affordability, policy/governance depth,
 budget round-tripping, scenario/content loading, and deep economy/service models.
 
 ---

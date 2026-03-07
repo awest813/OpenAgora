@@ -1,0 +1,20 @@
+{
+  "id": "infrastructure_spiral",
+  "trigger_all": [
+    { "index": "commuteIndex", "op": "lt", "value": 35 },
+    { "index": "safetyIndex", "op": "lt", "value": 45 }
+  ],
+  "trigger_any": [
+    { "index": "pollutionIndex", "op": "lt", "value": 40 },
+    { "index": "publicTrust", "op": "lt", "value": 45 }
+  ],
+  "min_month": 4,
+  "cooldown_months": 10,
+  "weight": 1.4,
+  "notification": "Multiple infrastructure systems are failing simultaneously, compounding commute and safety issues.",
+  "effects": [
+    { "target": "commuteIndex", "op": "add", "value": -6.0 },
+    { "target": "safetyIndex", "op": "add", "value": -5.0 },
+    { "target": "publicTrust", "op": "add", "value": -8.0 }
+  ]
+}

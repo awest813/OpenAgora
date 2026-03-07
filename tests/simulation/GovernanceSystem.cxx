@@ -264,3 +264,120 @@ TEST_CASE("Governance persisted state can be applied", "[simulation][governance]
   CHECK(loaded.taxEfficiencyMultiplier == Approx(1.15f));
   CHECK(loaded.incomeModifier == Approx(0.92f));
 }
+
+TEST_CASE("Governance supports compound trigger_all and trigger_any clauses", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 100.f, 15.f, 3, true, false);
+  governance.reset();
+
+  GovernanceEventDefinition eventDef;
+  eventDef.id = "compound_trigger_test";
+  eventDef.triggerAll = {
+      GovernanceTrigger{"affordabilityIndex", "lt", 60.f},
+      GovernanceTrigger{"safetyIndex", "lt", 60.f},
+  };
+  eventDef.triggerAny = {
+      GovernanceTrigger{"jobsIndex", "lt", 40.f},
+      GovernanceTrigger{"commuteIndex", "lt", 40.f},
+  };
+  eventDef.cooldownMonths = 3;
+  eventDef.notification = "Compound trigger fired";
+  eventDef.effects = {GovernanceEffect{"publicTrust", "add", -5.f}};
+  governance.addEventDefinition(eventDef);
+
+  CityIndicesData shouldTrigger;
+  shouldTrigger.affordability = 50.f;
+  shouldTrigger.safety = 50.f;
+  shouldTrigger.jobs = 30.f;
+  shouldTrigger.commute = 50.f;
+  shouldTrigger.pollution = 50.f;
+
+  governance.tickMonth(shouldTrigger);
+  REQUIRE_FALSE(governance.recentNotifications().empty());
+  CHECK(governance.recentNotifications().back().text == "Compound trigger fired");
+
+  governance.clearEvents();
+  governance.reset();
+  eventDef.cooldownMonths = 0;
+  governance.addEventDefinition(eventDef);
+
+  CityIndicesData shouldNotTrigger;
+  shouldNotTrigger.affordability = 50.f;
+  shouldNotTrigger.safety = 50.f;
+  shouldNotTrigger.jobs = 55.f;
+  shouldNotTrigger.commute = 55.f;
+  shouldNotTrigger.pollution = 50.f;
+
+  governance.tickMonth(shouldNotTrigger);
+  CHECK(governance.recentNotifications().empty());
+}
+
+TEST_CASE("Governance event month window gating is honored", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 100.f, 15.f, 3, true, false);
+  governance.reset();
+
+  GovernanceEventDefinition eventDef;
+  eventDef.id = "month_window_test";
+  eventDef.trigger = GovernanceTrigger{"affordabilityIndex", "lt", 60.f};
+  eventDef.minMonth = 2;
+  eventDef.maxMonth = 3;
+  eventDef.cooldownMonths = 0;
+  eventDef.notification = "Windowed event";
+  eventDef.effects = {GovernanceEffect{"publicTrust", "add", -2.f}};
+  governance.addEventDefinition(eventDef);
+
+  CityIndicesData indices;
+  indices.affordability = 50.f;
+  indices.safety = 50.f;
+  indices.jobs = 50.f;
+  indices.commute = 50.f;
+  indices.pollution = 50.f;
+
+  governance.tickMonth(indices); // month 1
+  CHECK(governance.recentNotifications().empty());
+
+  governance.tickMonth(indices); // month 2
+  REQUIRE(governance.recentNotifications().size() == 1);
+  CHECK(governance.recentNotifications().back().text == "Windowed event");
+}
+
+TEST_CASE("Governance selects one weighted event per month tick", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 100.f, 15.f, 3, true, false);
+  governance.reset();
+
+  GovernanceEventDefinition first;
+  first.id = "weighted_one";
+  first.trigger = GovernanceTrigger{"affordabilityIndex", "lt", 60.f};
+  first.cooldownMonths = 0;
+  first.notification = "Weighted One";
+  first.weight = 1.f;
+  first.effects = {GovernanceEffect{"publicTrust", "add", -1.f}};
+  governance.addEventDefinition(first);
+
+  GovernanceEventDefinition second;
+  second.id = "weighted_two";
+  second.trigger = GovernanceTrigger{"affordabilityIndex", "lt", 60.f};
+  second.cooldownMonths = 0;
+  second.notification = "Weighted Two";
+  second.weight = 5.f;
+  second.effects = {GovernanceEffect{"publicTrust", "add", -1.f}};
+  governance.addEventDefinition(second);
+
+  CityIndicesData indices;
+  indices.affordability = 50.f;
+  indices.safety = 50.f;
+  indices.jobs = 50.f;
+  indices.commute = 50.f;
+  indices.pollution = 50.f;
+
+  governance.tickMonth(indices);
+  CHECK(governance.recentNotifications().size() == 1);
+}

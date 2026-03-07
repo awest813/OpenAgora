@@ -26,6 +26,11 @@ struct GovernanceEventDefinition
 {
   std::string id;
   GovernanceTrigger trigger;
+  std::vector<GovernanceTrigger> triggerAll;
+  std::vector<GovernanceTrigger> triggerAny;
+  int minMonth = 0;
+  int maxMonth = 0; ///< 0 means no upper bound
+  float weight = 1.f;
   int cooldownMonths = 0;
   std::string notification;
   std::vector<GovernanceEffect> effects;
@@ -126,6 +131,9 @@ private:
   float computeApproval(const CityIndicesData &indices) const;
   float valueForTrigger(const std::string &indexKey, const CityIndicesData &indices, float currentApproval) const;
   bool evaluateTrigger(const GovernanceTrigger &trigger, const CityIndicesData &indices, float currentApproval) const;
+  bool evaluateEventDefinition(const GovernanceEventDefinition &eventDef, const CityIndicesData &indices,
+                               float currentApproval) const;
+  size_t selectWeightedEventIndex(const std::vector<size_t> &eligibleIndices) const;
 
   bool applyEffectToIndices(const GovernanceEffect &effect, CityIndicesData &indices);
   bool applyEffectToApproval(const GovernanceEffect &effect, float &approvalValue);

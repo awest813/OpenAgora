@@ -10,6 +10,7 @@
 #include <cmath>
 #include <deque>
 #include <filesystem>
+#include <random>
 #include <sstream>
 
 using json = nlohmann::json;
@@ -112,6 +113,38 @@ void GovernanceSystem::loadEventDefinitions()
       eventDef.trigger.op = parsed["trigger"].value("op", "lt");
       eventDef.trigger.value = parsed["trigger"].value("value", 0.f);
     }
+
+    if (parsed.contains("trigger_all") && parsed["trigger_all"].is_array())
+    {
+      for (const auto &triggerJson : parsed["trigger_all"])
+      {
+        if (!triggerJson.is_object())
+          continue;
+        GovernanceTrigger trigger;
+        trigger.index = triggerJson.value("index", std::string{});
+        trigger.op = triggerJson.value("op", "lt");
+        trigger.value = triggerJson.value("value", 0.f);
+        eventDef.triggerAll.push_back(trigger);
+      }
+    }
+
+    if (parsed.contains("trigger_any") && parsed["trigger_any"].is_array())
+    {
+      for (const auto &triggerJson : parsed["trigger_any"])
+      {
+        if (!triggerJson.is_object())
+          continue;
+        GovernanceTrigger trigger;
+        trigger.index = triggerJson.value("index", std::string{});
+        trigger.op = triggerJson.value("op", "lt");
+        trigger.value = triggerJson.value("value", 0.f);
+        eventDef.triggerAny.push_back(trigger);
+      }
+    }
+
+    eventDef.minMonth = std::max(0, parsed.value("min_month", 0));
+    eventDef.maxMonth = std::max(0, parsed.value("max_month", 0));
+    eventDef.weight = std::max(0.f, parsed.value("weight", 1.f));
 
     if (parsed.contains("effects") && parsed["effects"].is_array())
     {
@@ -232,6 +265,9 @@ float GovernanceSystem::valueForTrigger(const std::string &indexKey, const CityI
 
 bool GovernanceSystem::evaluateTrigger(const GovernanceTrigger &trigger, const CityIndicesData &indices, float currentApproval) const
 {
+  if (trigger.index.empty())
+    return true;
+
   const float lhs = valueForTrigger(trigger.index, indices, currentApproval);
   const std::string op = normalizedKey(trigger.op);
 
@@ -243,6 +279,63 @@ bool GovernanceSystem::evaluateTrigger(const GovernanceTrigger &trigger, const C
     return std::fabs(lhs - trigger.value) < 0.0001f;
 
   return false;
+}
+
+bool GovernanceSystem::evaluateEventDefinition(const GovernanceEventDefinition &eventDef, const CityIndicesData &indices,
+                                               float currentApproval) const
+{
+  if (eventDef.minMonth > 0 && m_totalMonthsElapsed < eventDef.minMonth)
+    return false;
+  if (eventDef.maxMonth > 0 && m_totalMonthsElapsed > eventDef.maxMonth)
+    return false;
+
+  if (!eventDef.trigger.index.empty() && !evaluateTrigger(eventDef.trigger, indices, currentApproval))
+    return false;
+
+  for (const auto &trigger : eventDef.triggerAll)
+  {
+    if (!evaluateTrigger(trigger, indices, currentApproval))
+      return false;
+  }
+
+  if (!eventDef.triggerAny.empty())
+  {
+    const bool anyMatched = std::any_of(eventDef.triggerAny.begin(), eventDef.triggerAny.end(),
+                                        [this, &indices, currentApproval](const GovernanceTrigger &trigger)
+                                        { return evaluateTrigger(trigger, indices, currentApproval); });
+    if (!anyMatched)
+      return false;
+  }
+
+  return true;
+}
+
+size_t GovernanceSystem::selectWeightedEventIndex(const std::vector<size_t> &eligibleIndices) const
+{
+  if (eligibleIndices.empty())
+    return 0;
+  if (eligibleIndices.size() == 1)
+    return eligibleIndices.front();
+
+  float totalWeight = 0.f;
+  for (const size_t idx : eligibleIndices)
+  {
+    totalWeight += std::max(0.0001f, m_events[idx].weight);
+  }
+
+  static thread_local std::mt19937 rng{std::random_device{}()};
+  std::uniform_real_distribution<float> dist(0.f, totalWeight);
+  const float pick = dist(rng);
+
+  float cumulative = 0.f;
+  for (const size_t idx : eligibleIndices)
+  {
+    cumulative += std::max(0.0001f, m_events[idx].weight);
+    if (pick <= cumulative)
+      return idx;
+  }
+
+  return eligibleIndices.back();
 }
 
 bool GovernanceSystem::applyEffectToIndices(const GovernanceEffect &effect, CityIndicesData &indices)
@@ -352,55 +445,62 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
                                         adjustedIndices.pollution,
                                         approvalValue});
     const bool allowEventEvaluation = distressMin <= m_eventThreshold;
-
-    for (auto &eventDef : m_events)
+    std::vector<size_t> eligibleEventIndices;
+    for (size_t i = 0; i < m_events.size(); ++i)
     {
+      auto &eventDef = m_events[i];
       if (!allowEventEvaluation)
+        continue;
+      if (m_hasPendingEventChoice)
         continue;
 
       if (eventDef.monthsUntilReady > 0)
         continue;
 
-      if (!evaluateTrigger(eventDef.trigger, adjustedIndices, approvalValue))
+      if (!evaluateEventDefinition(eventDef, adjustedIndices, approvalValue))
         continue;
 
-      eventDef.monthsUntilReady = eventDef.cooldownMonths;
-      if (!eventDef.notification.empty())
+      eligibleEventIndices.push_back(i);
+    }
+
+    if (!eligibleEventIndices.empty())
+    {
+      GovernanceEventDefinition &selectedEvent = m_events[selectWeightedEventIndex(eligibleEventIndices)];
+      selectedEvent.monthsUntilReady = selectedEvent.cooldownMonths;
+      if (!selectedEvent.notification.empty())
       {
-        pushNotification(eventDef.notification);
+        pushNotification(selectedEvent.notification);
       }
 
-      if (!eventDef.choices.empty())
+      if (!selectedEvent.choices.empty())
       {
-        if (!m_hasPendingEventChoice)
-        {
-          m_hasPendingEventChoice = true;
-          m_pendingEventChoice = eventDef;
-          pushNotification("Decision required: " + eventDef.id);
-        }
-        continue;
+        m_hasPendingEventChoice = true;
+        m_pendingEventChoice = selectedEvent;
+        pushNotification("Decision required: " + selectedEvent.id);
       }
-
-      for (const auto &effect : eventDef.effects)
+      else
       {
-        if (applyEffectToIndices(effect, adjustedIndices))
+        for (const auto &effect : selectedEvent.effects)
         {
-          approvalValue = computeApproval(adjustedIndices);
-          continue;
-        }
+          if (applyEffectToIndices(effect, adjustedIndices))
+          {
+            approvalValue = computeApproval(adjustedIndices);
+            continue;
+          }
 
-        if (applyEffectToApproval(effect, approvalValue))
-        {
-          continue;
-        }
+          if (applyEffectToApproval(effect, approvalValue))
+          {
+            continue;
+          }
 
-        if (applyEffectToGovernanceState(effect))
-        {
-          continue;
-        }
+          if (applyEffectToGovernanceState(effect))
+          {
+            continue;
+          }
 
-        LOG(LOG_DEBUG) << "Ignoring unsupported governance effect target '" << effect.target << "' in event '" << eventDef.id
-                       << "'";
+          LOG(LOG_DEBUG) << "Ignoring unsupported governance effect target '" << effect.target << "' in event '"
+                         << selectedEvent.id << "'";
+        }
       }
     }
   }

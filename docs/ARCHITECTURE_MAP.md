@@ -70,9 +70,11 @@ game/ui panels
   ├── BuildMenu                  – tile placement palette
   ├── GameTimeMenu               – pause / 1×/2×/4×/8× speed
   ├── CityIndicesPanel           – five coloured index bars (Affordability … Pollution)
-  ├── GovernancePanel            – approval bar, status badges, recent events
-  ├── PolicyPanel                – per-policy toggles + budget summary
+  ├── GovernancePanel            – approval bar, status badges, recent events + decision choices
+  ├── PolicyPanel                – category-grouped policy levels + lock reasons + budget summary
   ├── NotificationOverlay        – toast popups (auto-dismiss after 8 s)
+  ├── EventLogPanel              – scrollable full event history
+  ├── EconomyPanel               – deep economy/service indicators
   ├── PauseMenu                  – pause / resume / settings / quit
   ├── SettingsMenu               – resolution, full-screen, audio, language
   └── LoadMenu                   – save-file browser
@@ -115,16 +117,24 @@ GamePlay                        (src/game/GamePlay.{hxx,cxx})
   └── runMonthlySimulationTick(mapNodes)
         ├── CityIndices::tick()             – aggregate 5 scalar indices (0-100)
         ├── AffordabilityModel::tick()      – rent/income/displacement pressure
-        ├── GovernanceSystem::tickMonth()   – approval, events, checkpoint
-        ├── BudgetSystem::tick()            – tax revenue, policy expenses
+        ├── PolicyEngine::tick()            – leveled policy effects + monthly costs
+        ├── GovernanceSystem::tickMonth()   – approval, weighted events, checkpoint, choices
+        ├── BudgetSystem::tick()            – tax revenue, policy expenses, choice adjustments
+        ├── EconomyDepthModel::tick()       – unemployment, wages, confidence, debt stress
+        ├── ServiceStrainModel::tick()      – transit reliability + service strain
+        ├── SimulationContext::advanceMonth() – cross-system state bridge
         └── ZoneManager::applyChurn()       – evict residents under pressure
 
 Simulation layer (src/simulation/ – pure C++17, no SDL)
   ├── CityIndices        – weighted aggregation of tile attributes
   ├── AffordabilityModel – rent vs income per zone-area density band
-  ├── PolicyEngine       – data-driven policy application (add/multiply/set)
-  ├── GovernanceSystem   – approval scoring (weighted average of indices)
-  └── BudgetSystem       – monthly revenue and expenditure ledger
+  ├── PolicyEngine       – leveled policies, prereqs/exclusivity, context effects
+  ├── GovernanceSystem   – approval + weighted/compound events + choice handling
+  ├── BudgetSystem       – monthly revenue and expenditure ledger (+ persistence)
+  ├── EconomyDepthModel  – deeper economy metrics
+  ├── ServiceStrainModel – public-service pressure metrics
+  ├── SimulationContext  – shared month-level context
+  └── ScenarioCatalog    – data-driven start scenarios
 ```
 
 ---
@@ -142,7 +152,10 @@ PolicyEngine                (src/simulation/PolicyEngine.{hxx,cxx})
   └── Scans data/resources/data/policies/*.json at startup (if flag enabled)
 
 GovernanceSystem            (src/simulation/GovernanceSystem.{hxx,cxx})
-  └── Scans data/resources/data/events/*.json at startup (if flag enabled)
+  └── Scans data/resources/data/events/*.json (supports trigger_all/trigger_any/month windows/weights)
+
+ScenarioCatalog             (src/simulation/ScenarioCatalog.{hxx,cxx})
+  └── Scans data/resources/data/scenarios/*.json at startup
 
 FeatureFlags                (src/services/FeatureFlags.{hxx,cxx})
   └── Reads data/resources/data/FeatureFlags.json once at startup

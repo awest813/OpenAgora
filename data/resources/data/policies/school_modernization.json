@@ -1,0 +1,29 @@
+{
+  "id": "school_modernization",
+  "label": "School Modernization Program",
+  "description": "Upgrades aging school infrastructure and expands modern vocational pathways.",
+  "category": "services",
+  "type": "service_boost",
+  "cost_per_month": 470,
+  "min_approval": 30,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 470,
+      "effects": [
+        { "target": "educationAccessStress", "op": "add", "value": -7.0 },
+        { "target": "jobsIndex", "op": "add", "value": 3.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 920,
+      "unlock_min_approval": 55,
+      "effects": [
+        { "target": "educationAccessStress", "op": "add", "value": -12.0 },
+        { "target": "jobsIndex", "op": "add", "value": 6.0 },
+        { "target": "medianIncome", "op": "multiply", "value": 1.04 }
+      ]
+    }
+  ]
+}

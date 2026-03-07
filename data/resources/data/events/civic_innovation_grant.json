@@ -1,0 +1,18 @@
+{
+  "id": "civic_innovation_grant",
+  "trigger_all": [
+    { "index": "jobsIndex", "op": "gt", "value": 55 },
+    { "index": "publicTrust", "op": "gt", "value": 50 }
+  ],
+  "min_month": 6,
+  "max_month": 40,
+  "cooldown_months": 14,
+  "weight": 0.8,
+  "notification": "Your city won a competitive civic innovation grant for smart transit and neighborhood services.",
+  "effects": [
+    { "target": "commuteIndex", "op": "add", "value": 5.0 },
+    { "target": "safetyIndex", "op": "add", "value": 3.0 },
+    { "target": "publicTrust", "op": "add", "value": 4.0 },
+    { "target": "taxEfficiency", "op": "add", "value": 0.05 }
+  ]
+}

@@ -10,7 +10,7 @@ TEST_CASE("Policy content pack loads with leveled definitions", "[simulation][co
   engine.loadPolicies();
 
   const auto &defs = engine.definitions();
-  REQUIRE(defs.size() >= 8);
+  REQUIRE(defs.size() >= 15);
 
   for (const auto &def : defs)
   {
