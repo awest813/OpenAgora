@@ -48,6 +48,7 @@ void FeatureFlags::readFile()
   m_governanceEventThreshold = j.value("governance_event_threshold", 30.f);
   m_governanceSoftFailThreshold = j.value("governance_soft_fail_threshold", 15.f);
   m_governancePolicyLockMonths = j.value("governance_policy_lock_months", 3);
+  m_defaultScenarioId = j.value("default_scenario_id", std::string{});
 
   LOG(LOG_INFO) << "FeatureFlags loaded:"
                 << " affordability=" << m_affordabilitySystem
@@ -68,5 +69,6 @@ void FeatureFlags::readFile()
                 << " constraintThreshold=" << m_governanceConstraintThreshold
                 << " eventThreshold=" << m_governanceEventThreshold
                 << " softFailThreshold=" << m_governanceSoftFailThreshold
-                << " policyLockMonths=" << m_governancePolicyLockMonths;
+                << " policyLockMonths=" << m_governancePolicyLockMonths
+                << " defaultScenario=" << (m_defaultScenarioId.empty() ? "<none>" : m_defaultScenarioId);
 }

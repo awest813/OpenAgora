@@ -1,8 +1,11 @@
 #include "ScenarioCatalog.hxx"
 
+#include "BudgetSystem.hxx"
 #include "Constants.hxx"
 #include "Filesystem.hxx"
+#include "GovernanceSystem.hxx"
 #include "LOG.hxx"
+#include "PolicyEngine.hxx"
 #include "json.hxx"
 
 #include <algorithm>
@@ -72,6 +75,11 @@ void ScenarioCatalog::clear()
   m_definitions.clear();
 }
 
+void ScenarioCatalog::addDefinition(const ScenarioDefinition &definition)
+{
+  m_definitions.push_back(definition);
+}
+
 const ScenarioDefinition *ScenarioCatalog::find(const std::string &id) const
 {
   const auto it = std::find_if(m_definitions.begin(), m_definitions.end(),
@@ -79,4 +87,46 @@ const ScenarioDefinition *ScenarioCatalog::find(const std::string &id) const
   if (it == m_definitions.end())
     return nullptr;
   return &(*it);
+}
+
+bool ScenarioCatalog::applyScenario(const ScenarioDefinition &definition) const
+{
+  GovernancePersistedState governance = GovernanceSystem::instance().persistedState();
+  governance.approval = definition.startingApproval;
+  governance.totalMonthsElapsed = 0;
+  governance.monthsSinceCheckpoint = 0;
+  governance.policyLockMonthsRemaining = 0;
+  governance.policyConstrained = false;
+  governance.lostElection = false;
+  governance.checkpointPending = false;
+  governance.taxEfficiencyMultiplier = 1.f;
+  governance.incomeModifier = 1.f;
+  GovernanceSystem::instance().applyPersistedState(governance);
+
+  BudgetPersistedState budget = BudgetSystem::instance().persistedState();
+  budget.runningBalance = definition.startingBalance;
+  budget.lastRevenue = 0.f;
+  budget.lastExpenses = 0.f;
+  budget.month = 0;
+  BudgetSystem::instance().applyPersistedState(budget);
+
+  bool allPoliciesApplied = true;
+  for (const auto &policy : PolicyEngine::instance().definitions())
+    PolicyEngine::instance().setPolicyLevel(policy.id, 0);
+
+  for (const auto &policyId : definition.recommendedPolicies)
+  {
+    if (!PolicyEngine::instance().setPolicyLevel(policyId, 1))
+      allPoliciesApplied = false;
+  }
+
+  return allPoliciesApplied;
+}
+
+bool ScenarioCatalog::applyScenarioById(const std::string &id) const
+{
+  const ScenarioDefinition *definition = find(id);
+  if (!definition)
+    return false;
+  return applyScenario(*definition);
 }

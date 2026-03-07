@@ -433,7 +433,7 @@ Implemented test files:
 - `tests/simulation/ServiceStrainModel.cxx` – transit/safety/education/health strain behavior ✅
 - `tests/simulation/ScenarioCatalog.cxx` + `tests/simulation/ContentValidation.cxx` – scenario/content loading validation ✅
 
-All simulation assertions pass (currently 220 assertions across 61 simulation test cases). Run with:
+All simulation assertions pass (currently 225 assertions across 62 simulation test cases). Run with:
 ```
 ./Cytopia_Tests "[simulation]"
 ```

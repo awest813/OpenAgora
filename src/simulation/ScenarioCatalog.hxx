@@ -23,9 +23,12 @@ public:
 
   void loadScenarios();
   void clear();
+  void addDefinition(const ScenarioDefinition &definition);
 
   const std::vector<ScenarioDefinition> &definitions() const { return m_definitions; }
   const ScenarioDefinition *find(const std::string &id) const;
+  bool applyScenario(const ScenarioDefinition &definition) const;
+  bool applyScenarioById(const std::string &id) const;
 
 private:
   ScenarioCatalog() = default;

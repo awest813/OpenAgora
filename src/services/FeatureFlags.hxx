@@ -3,6 +3,8 @@
 
 #include "../util/Singleton.hxx"
 
+#include <string>
+
 /**
  * @class FeatureFlags
  * @brief Reads FeatureFlags.json and gates in-development systems at runtime.
@@ -89,6 +91,9 @@ public:
   /// Number of months policy constraints remain after a failed checkpoint.
   int governancePolicyLockMonths() const { return m_governancePolicyLockMonths; }
 
+  /// Optional scenario id applied to each new game start (empty disables).
+  const std::string &defaultScenarioId() const { return m_defaultScenarioId; }
+
 private:
   FeatureFlags() = default;
   ~FeatureFlags() = default;
@@ -113,6 +118,7 @@ private:
   float m_governanceEventThreshold = 30.f;
   float m_governanceSoftFailThreshold = 15.f;
   int m_governancePolicyLockMonths = 3;
+  std::string m_defaultScenarioId;
 };
 
 #endif // FEATURE_FLAGS_HXX_

@@ -327,12 +327,28 @@ void Game::newGame(bool generateTerrain)
   SimulationContext::instance().reset();
   for (const auto &definition : PolicyEngine::instance().definitions())
     PolicyEngine::instance().setPolicyLevel(definition.id, 0);
+  applyConfiguredScenario();
 }
 
 void Game::loadGame(const std::string &fileName)
 {
   MapFunctions::instance().loadMapFromFile(fileName);
   m_GamePlay.resetManagers();
+}
+
+void Game::applyConfiguredScenario()
+{
+  const std::string &scenarioId = FeatureFlags::instance().defaultScenarioId();
+  if (scenarioId.empty())
+    return;
+
+  if (!ScenarioCatalog::instance().applyScenarioById(scenarioId))
+  {
+    LOG(LOG_WARNING) << "Configured default scenario '" << scenarioId << "' was not applied.";
+    return;
+  }
+
+  LOG(LOG_INFO) << "Applied default scenario '" << scenarioId << "' to new game state.";
 }
 
 } // namespace Cytopia
