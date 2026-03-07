@@ -27,6 +27,7 @@ public:
   /**
    * @brief Set the zone growth rate multiplier driven by governance approval.
    *
+   * This becomes the baseline multiplier applied to all zone types.
    * Values below 1.0 slow building spawning (fraction of spawn attempts are
    * skipped).  Values above 1.0 give some zone areas a bonus spawn attempt
    * each tick.  The multiplier is applied probabilistically per-area inside
@@ -41,6 +42,19 @@ public:
    * @param rate Multiplier in [0, 2]. Out-of-range values are clamped.
    */
   void setGrowthRateMultiplier(float rate);
+
+  /**
+   * @brief Set economy-driven per-zone-type growth rate multipliers.
+   *
+   * These are multiplied on top of the base governance growth rate when
+   * spawning buildings.  A value of 1.0 is neutral; < 1.0 slows that zone
+   * type; > 1.0 accelerates it.
+   *
+   * @param residential  Multiplier for residential zones (driven by affordabilityIndex).
+   * @param commercial   Multiplier for commercial zones (driven by jobsIndex + businessConfidence).
+   * @param industrial   Multiplier for industrial zones (driven by pollutionIndex + debtStress).
+   */
+  void setZoneTypeGrowthMultipliers(float residential, float commercial, float industrial);
 
 private:
   /**
@@ -98,7 +112,10 @@ private:
   std::vector<Point> m_nodesToOccupy; /// All zoneAreas
   std::vector<Point> m_nodesToVacate; /// All zoneAreas
   std::vector<Point> m_nodesToRemove; /// All zoneAreas
-  float m_growthRateMultiplier = 1.0f; ///< Governance-driven spawn rate modifier
+  float m_growthRateMultiplier = 1.0f;       ///< Governance-driven spawn rate modifier (baseline)
+  float m_residentialGrowthMultiplier = 1.0f; ///< Affordability-driven residential growth modifier
+  float m_commercialGrowthMultiplier  = 1.0f; ///< Jobs/confidence-driven commercial growth modifier
+  float m_industrialGrowthMultiplier  = 1.0f; ///< Pollution/debt-driven industrial growth modifier
 };
 
 #endif

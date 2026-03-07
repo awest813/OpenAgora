@@ -8,6 +8,7 @@
 #include "PolicyEngine.hxx"
 #include "ServiceStrainModel.hxx"
 #include "SimulationContext.hxx"
+#include "ZoneGrowthFormulas.hxx"
 #include "../services/FeatureFlags.hxx"
 #include "LOG.hxx"
 #include "enums.hxx"
@@ -177,6 +178,18 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
     ctx.safetyCapacityLoad    = services.safetyCapacityLoad;
     ctx.educationAccessStress = services.educationAccessStress;
     ctx.healthAccessStress    = services.healthAccessStress;
+  }
+
+  // ── Economy-driven per-zone-type growth multipliers ────────────────────────
+  // Wire EconomyDepthModel outputs + city indices to zone-type-specific growth
+  // rates so the player can see that policies and building mix visibly affect
+  // how their city develops, not only the governance approval number.
+  if (flags.economyDepthModel() || flags.affordabilitySystem())
+  {
+    const ZoneGrowthMultipliers multipliers =
+        computeZoneGrowthMultipliers(indices, SimulationContext::instance().data(), flags.economyDepthModel());
+    m_ZoneManager.setZoneTypeGrowthMultipliers(
+        multipliers.residential, multipliers.commercial, multipliers.industrial);
   }
 
   // ── Population churn ───────────────────────────────────────────────────────
