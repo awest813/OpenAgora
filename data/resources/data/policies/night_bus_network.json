@@ -1,0 +1,29 @@
+{
+  "id": "night_bus_network",
+  "label": "Night Bus Network",
+  "description": "Adds late-night bus routes for shift workers and students, reducing off-peak travel barriers.",
+  "category": "transit",
+  "type": "service_boost",
+  "cost_per_month": 260,
+  "min_approval": 20,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 260,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 3.0 },
+        { "target": "transitReliability", "op": "add", "value": 4.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 500,
+      "unlock_min_approval": 45,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 6.0 },
+        { "target": "transitReliability", "op": "add", "value": 8.0 },
+        { "target": "safetyIndex", "op": "add", "value": 2.0 }
+      ]
+    }
+  ]
+}

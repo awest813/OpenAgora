@@ -343,8 +343,8 @@ src/
     └── FeatureFlags.hxx/.cxx          ✅
 
 data/resources/data/
-├── policies/       ← JSON policy definitions  ✅ (15 policies)
-├── events/         ← JSON event trigger+effect definitions  ✅ (15 events, incl. choice events + compound triggers)
+├── policies/       ← JSON policy definitions  ✅ (20 policies)
+├── events/         ← JSON event trigger+effect definitions  ✅ (20 events, incl. choice events + compound triggers)
 ├── scenarios/      ← JSON scenario presets  ✅ (5 scenarios)
 └── FeatureFlags.json  ✅ (all Phase 1+2 flags now enabled)
 ```
