@@ -43,6 +43,7 @@ public:
             float policyExpenses, float approval);
 
   const EconomyDepthState &state() const { return m_state; }
+  EconomyDepthState &mutableState() { return m_state; }
 
 private:
   EconomyDepthModel() = default;

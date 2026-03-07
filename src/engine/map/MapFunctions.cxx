@@ -10,6 +10,13 @@
 #include <MapLayers.hxx>
 #include <isoMath.hxx>
 #include <SignalMediator.hxx>
+#include <AffordabilityModel.hxx>
+#include <BudgetSystem.hxx>
+#include <EconomyDepthModel.hxx>
+#include <GovernanceSystem.hxx>
+#include <PolicyEngine.hxx>
+#include <ServiceStrainModel.hxx>
+#include <SimulationContext.hxx>
 
 #include <set>
 #include <queue>
@@ -702,12 +709,10 @@ void MapFunctions::loadMapFromFile(const std::string &fileName)
     throw ConfigurationError(TRACE_INFO "Could not parse savegame file " + fileName);
 
   size_t saveGameVersion = saveGameJSON.value("Savegame version", 0);
-
-  if (saveGameVersion != SAVEGAME_VERSION)
+  if (saveGameVersion < 4 || saveGameVersion > SAVEGAME_VERSION)
   {
-    /* @todo Check savegame version for compatibility and add upgrade functions here later if needed */
     throw CytopiaError(TRACE_INFO "Trying to load a Savegame with version " + std::to_string(saveGameVersion) +
-                       " but only save-games with version " + std::to_string(SAVEGAME_VERSION) + " are supported");
+                       " but only save-games with version range [4, " + std::to_string(SAVEGAME_VERSION) + "] are supported");
   }
 
   int columns = saveGameJSON.value("columns", -1);
@@ -746,6 +751,112 @@ void MapFunctions::loadMapFromFile(const std::string &fileName)
 
   m_map = std::move(map);
   updateAllNodes();
+
+  if (saveGameJSON.contains("simulation") && saveGameJSON["simulation"].is_object())
+  {
+    const json &simulation = saveGameJSON["simulation"];
+
+    if (simulation.contains("affordability") && simulation["affordability"].is_object())
+    {
+      const json &aff = simulation["affordability"];
+      AffordabilityState &state = AffordabilityModel::instance().mutableState();
+      state.medianRent = aff.value("medianRent", state.medianRent);
+      state.medianIncome = aff.value("medianIncome", state.medianIncome);
+      state.affordabilityIndex = aff.value("affordabilityIndex", state.affordabilityIndex);
+      state.displacementPressure = aff.value("displacementPressure", state.displacementPressure);
+      state.landValueProxy = aff.value("landValueProxy", state.landValueProxy);
+    }
+
+    if (simulation.contains("governance") && simulation["governance"].is_object())
+    {
+      const json &gov = simulation["governance"];
+      GovernancePersistedState state = GovernanceSystem::instance().persistedState();
+      state.approval = gov.value("approval", state.approval);
+      state.totalMonthsElapsed = gov.value("totalMonthsElapsed", state.totalMonthsElapsed);
+      state.monthsSinceCheckpoint = gov.value("monthsSinceCheckpoint", state.monthsSinceCheckpoint);
+      state.policyLockMonthsRemaining = gov.value("policyLockMonthsRemaining", state.policyLockMonthsRemaining);
+      state.policyConstrained = gov.value("policyConstrained", state.policyConstrained);
+      state.lostElection = gov.value("lostElection", state.lostElection);
+      state.checkpointPending = gov.value("checkpointPending", state.checkpointPending);
+      state.taxEfficiencyMultiplier = gov.value("taxEfficiencyMultiplier", state.taxEfficiencyMultiplier);
+      state.incomeModifier = gov.value("incomeModifier", state.incomeModifier);
+      GovernanceSystem::instance().applyPersistedState(state);
+    }
+
+    if (simulation.contains("budget") && simulation["budget"].is_object())
+    {
+      const json &budgetJson = simulation["budget"];
+      BudgetPersistedState budget = BudgetSystem::instance().persistedState();
+      budget.runningBalance = budgetJson.value("runningBalance", budget.runningBalance);
+      budget.lastRevenue = budgetJson.value("lastRevenue", budget.lastRevenue);
+      budget.lastExpenses = budgetJson.value("lastExpenses", budget.lastExpenses);
+      budget.month = budgetJson.value("month", budget.month);
+      BudgetSystem::instance().applyPersistedState(budget);
+    }
+
+    if (simulation.contains("economyDepth") && simulation["economyDepth"].is_object())
+    {
+      const json &eco = simulation["economyDepth"];
+      EconomyDepthState &state = EconomyDepthModel::instance().mutableState();
+      state.unemploymentPressure = eco.value("unemploymentPressure", state.unemploymentPressure);
+      state.wagePressure = eco.value("wagePressure", state.wagePressure);
+      state.businessConfidence = eco.value("businessConfidence", state.businessConfidence);
+      state.debtStress = eco.value("debtStress", state.debtStress);
+    }
+
+    if (simulation.contains("serviceStrain") && simulation["serviceStrain"].is_object())
+    {
+      const json &services = simulation["serviceStrain"];
+      ServiceStrainState &state = ServiceStrainModel::instance().mutableState();
+      state.transitReliability = services.value("transitReliability", state.transitReliability);
+      state.safetyCapacityLoad = services.value("safetyCapacityLoad", state.safetyCapacityLoad);
+      state.educationAccessStress = services.value("educationAccessStress", state.educationAccessStress);
+      state.healthAccessStress = services.value("healthAccessStress", state.healthAccessStress);
+    }
+
+    if (simulation.contains("context") && simulation["context"].is_object())
+    {
+      const json &ctxJson = simulation["context"];
+      SimulationContextData &ctx = SimulationContext::instance().mutableData();
+      ctx.month = ctxJson.value("month", ctx.month);
+      ctx.taxEfficiency = ctxJson.value("taxEfficiency", ctx.taxEfficiency);
+      ctx.approvalMultiplier = ctxJson.value("approvalMultiplier", ctx.approvalMultiplier);
+      ctx.growthRateModifier = ctxJson.value("growthRateModifier", ctx.growthRateModifier);
+      ctx.unemploymentPressure = ctxJson.value("unemploymentPressure", ctx.unemploymentPressure);
+      ctx.wagePressure = ctxJson.value("wagePressure", ctx.wagePressure);
+      ctx.businessConfidence = ctxJson.value("businessConfidence", ctx.businessConfidence);
+      ctx.debtStress = ctxJson.value("debtStress", ctx.debtStress);
+      ctx.transitReliability = ctxJson.value("transitReliability", ctx.transitReliability);
+      ctx.safetyCapacityLoad = ctxJson.value("safetyCapacityLoad", ctx.safetyCapacityLoad);
+      ctx.educationAccessStress = ctxJson.value("educationAccessStress", ctx.educationAccessStress);
+      ctx.healthAccessStress = ctxJson.value("healthAccessStress", ctx.healthAccessStress);
+    }
+
+    for (const auto &definition : PolicyEngine::instance().definitions())
+      PolicyEngine::instance().setPolicyLevel(definition.id, 0);
+
+    if (simulation.contains("policy_levels") && simulation["policy_levels"].is_array())
+    {
+      for (const auto &entry : simulation["policy_levels"])
+      {
+        if (!entry.is_object())
+          continue;
+        const std::string policyId = entry.value("id", std::string{});
+        const int level = entry.value("level", 0);
+        if (!policyId.empty())
+          PolicyEngine::instance().setPolicyLevel(policyId, level);
+      }
+    }
+    else if (simulation.contains("activePolicies") && simulation["activePolicies"].is_array())
+    {
+      for (const auto &entry : simulation["activePolicies"])
+      {
+        if (entry.is_string())
+          PolicyEngine::instance().setActive(entry.get<std::string>(), true);
+      }
+    }
+  }
+
   LOG(LOG_DEBUG) << "Load succesfully: " << CYTOPIA_SAVEGAME_DIR + fileName;
 }
 
@@ -754,11 +865,79 @@ void MapFunctions::saveMapToFile(const std::string &fileName)
   // make sure savegame dir exists
   fs::createDirectory(CYTOPIA_SAVEGAME_DIR);
 
+  const AffordabilityState &affordability = AffordabilityModel::instance().state();
+  const GovernancePersistedState governance = GovernanceSystem::instance().persistedState();
+  const BudgetPersistedState budget = BudgetSystem::instance().persistedState();
+  const EconomyDepthState &economy = EconomyDepthModel::instance().state();
+  const ServiceStrainState &services = ServiceStrainModel::instance().state();
+  const SimulationContextData &context = SimulationContext::instance().data();
+
+  json policyLevels = json::array();
+  json activePolicies = json::array();
+  for (const auto &definition : PolicyEngine::instance().definitions())
+  {
+    const int level = PolicyEngine::instance().policyLevel(definition.id);
+    if (level > 0)
+    {
+      policyLevels.push_back({{"id", definition.id}, {"level", level}});
+      activePolicies.push_back(definition.id);
+    }
+  }
+
+  const json simulation = json{
+      {"affordability",
+       {{"medianRent", affordability.medianRent},
+        {"medianIncome", affordability.medianIncome},
+        {"affordabilityIndex", affordability.affordabilityIndex},
+        {"displacementPressure", affordability.displacementPressure},
+        {"landValueProxy", affordability.landValueProxy}}},
+      {"governance",
+       {{"approval", governance.approval},
+        {"totalMonthsElapsed", governance.totalMonthsElapsed},
+        {"monthsSinceCheckpoint", governance.monthsSinceCheckpoint},
+        {"policyLockMonthsRemaining", governance.policyLockMonthsRemaining},
+        {"policyConstrained", governance.policyConstrained},
+        {"lostElection", governance.lostElection},
+        {"checkpointPending", governance.checkpointPending},
+        {"taxEfficiencyMultiplier", governance.taxEfficiencyMultiplier},
+        {"incomeModifier", governance.incomeModifier}}},
+      {"budget",
+       {{"runningBalance", budget.runningBalance},
+        {"lastRevenue", budget.lastRevenue},
+        {"lastExpenses", budget.lastExpenses},
+        {"month", budget.month}}},
+      {"economyDepth",
+       {{"unemploymentPressure", economy.unemploymentPressure},
+        {"wagePressure", economy.wagePressure},
+        {"businessConfidence", economy.businessConfidence},
+        {"debtStress", economy.debtStress}}},
+      {"serviceStrain",
+       {{"transitReliability", services.transitReliability},
+        {"safetyCapacityLoad", services.safetyCapacityLoad},
+        {"educationAccessStress", services.educationAccessStress},
+        {"healthAccessStress", services.healthAccessStress}}},
+      {"context",
+       {{"month", context.month},
+        {"taxEfficiency", context.taxEfficiency},
+        {"approvalMultiplier", context.approvalMultiplier},
+        {"growthRateModifier", context.growthRateModifier},
+        {"unemploymentPressure", context.unemploymentPressure},
+        {"wagePressure", context.wagePressure},
+        {"businessConfidence", context.businessConfidence},
+        {"debtStress", context.debtStress},
+        {"transitReliability", context.transitReliability},
+        {"safetyCapacityLoad", context.safetyCapacityLoad},
+        {"educationAccessStress", context.educationAccessStress},
+        {"healthAccessStress", context.healthAccessStress}}},
+      {"policy_levels", policyLevels},
+      {"activePolicies", activePolicies}};
+
   //create savegame json string
   const json j = json{{"Savegame version", SAVEGAME_VERSION},
                       {"columns", m_map->m_columns},
                       {"rows", m_map->m_rows},
-                      {"mapNode", m_map->mapNodes}};
+                      {"mapNode", m_map->mapNodes},
+                      {"simulation", simulation}};
 
 #ifdef DEBUG
   // Write uncompressed savegame for easier debugging

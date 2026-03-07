@@ -29,17 +29,22 @@ and pollution. Residents react. Elections loom. Build a city people actually wan
 ### Simulation Layer
 - **City Indices Dashboard** – five live city-wide metrics (affordability, safety, jobs, commute, pollution) with trend arrows
 - **Affordability Model** – rent/income ratio, displacement pressure, and population churn
-- **Policy Engine** – data-driven policies loaded from JSON; toggle policies at runtime and see their monthly cost
-- **Governance System** – public trust score, council checkpoints, soft-fail scenarios
+- **Policy Engine 2.0** – leveled policies with prerequisites, exclusivity checks, approval gates, durations, and deep simulation effect targets
+- **Governance System** – public trust score, council checkpoints, cooldown events, and choice-based event responses
 - **Budget System** – monthly tax revenue with approval multipliers, running balance, 12-month history
-- **Event System** – data-driven trigger/effect events (rent strikes, business exodus, transit breakdowns)
+- **Economy Depth Model** – unemployment pressure, wage pressure, business confidence, and debt stress
+- **Service Strain Model** – transit reliability, safety capacity load, education access stress, and health access stress
+- **Event System** – data-driven trigger/effect events with optional player choices and budget-adjusted outcomes
+- **Scenario Catalog** – JSON-curated scenario presets with starting conditions and recommended policy packages
 - **Affordability Heatmap Overlay** – per-tile green/yellow/red heat tint showing residential density pressure
 
 ### UI
 - City Indices Panel (sidebar with coloured bars and trend arrows)
-- Policy Panel (per-policy toggles, monthly cost, budget summary)
-- Governance Panel (approval bar, event log, council checkpoint modal)
+- Policy Panel (category-grouped policies with level controls and lock reasons)
+- Governance Panel (approval bar, recent event feed, event choices, council checkpoint modal)
 - Notification Overlay (toast-style event alerts, 8-second auto-dismiss)
+- Event Log Panel (scrollable full notification history)
+- Economy Panel (budget + deep economy/service indicators)
 
 ---
 
@@ -112,8 +117,8 @@ ctest --output-on-failure
 ./OpenAgora_Tests "[simulation]"
 ```
 
-33 simulation-layer unit tests cover all five city indices, the affordability model,
-the policy engine, the governance system, and the budget system.
+58 simulation-layer unit tests cover city indices, affordability, policy/governance depth,
+budget round-tripping, scenario/content loading, and deep economy/service models.
 
 ---
 

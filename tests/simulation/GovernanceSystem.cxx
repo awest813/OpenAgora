@@ -233,3 +233,34 @@ TEST_CASE("Governance supports choice-based events and budget adjustments", "[si
   CHECK_FALSE(governance.hasPendingEventChoice());
   CHECK(governance.consumeBudgetAdjustment() == Approx(500.f));
 }
+
+TEST_CASE("Governance persisted state can be applied", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 30.f, 15.f, 3, false, false);
+  governance.reset();
+
+  GovernancePersistedState state;
+  state.approval = 72.f;
+  state.totalMonthsElapsed = 18;
+  state.monthsSinceCheckpoint = 4;
+  state.policyLockMonthsRemaining = 2;
+  state.policyConstrained = true;
+  state.lostElection = false;
+  state.checkpointPending = true;
+  state.taxEfficiencyMultiplier = 1.15f;
+  state.incomeModifier = 0.92f;
+
+  governance.applyPersistedState(state);
+  const GovernancePersistedState loaded = governance.persistedState();
+
+  CHECK(loaded.approval == Approx(72.f));
+  CHECK(loaded.totalMonthsElapsed == 18);
+  CHECK(loaded.monthsSinceCheckpoint == 4);
+  CHECK(loaded.policyLockMonthsRemaining == 2);
+  CHECK(loaded.policyConstrained);
+  CHECK(loaded.checkpointPending);
+  CHECK(loaded.taxEfficiencyMultiplier == Approx(1.15f));
+  CHECK(loaded.incomeModifier == Approx(0.92f));
+}

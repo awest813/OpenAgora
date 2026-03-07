@@ -1,5 +1,7 @@
 #include "BudgetSystem.hxx"
 
+#include <algorithm>
+
 void BudgetSystem::configure(const Config &config)
 {
   m_config = config;
@@ -41,4 +43,22 @@ void BudgetSystem::tick(int totalInhabitants, float policyExpenses, float approv
 
   if (static_cast<int>(m_history.size()) > MAX_HISTORY)
     m_history.pop_front();
+}
+
+BudgetPersistedState BudgetSystem::persistedState() const
+{
+  BudgetPersistedState state;
+  state.runningBalance = m_runningBalance;
+  state.lastRevenue = m_lastRevenue;
+  state.lastExpenses = m_lastExpenses;
+  state.month = m_month;
+  return state;
+}
+
+void BudgetSystem::applyPersistedState(const BudgetPersistedState &state)
+{
+  m_runningBalance = state.runningBalance;
+  m_lastRevenue = state.lastRevenue;
+  m_lastExpenses = state.lastExpenses;
+  m_month = std::max(0, state.month);
 }

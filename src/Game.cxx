@@ -325,17 +325,14 @@ void Game::newGame(bool generateTerrain)
   EconomyDepthModel::instance().reset();
   ServiceStrainModel::instance().reset();
   SimulationContext::instance().reset();
+  for (const auto &definition : PolicyEngine::instance().definitions())
+    PolicyEngine::instance().setPolicyLevel(definition.id, 0);
 }
 
 void Game::loadGame(const std::string &fileName)
 {
   MapFunctions::instance().loadMapFromFile(fileName);
   m_GamePlay.resetManagers();
-  GovernanceSystem::instance().reset();
-  BudgetSystem::instance().reset();
-  EconomyDepthModel::instance().reset();
-  ServiceStrainModel::instance().reset();
-  SimulationContext::instance().reset();
 }
 
 } // namespace Cytopia

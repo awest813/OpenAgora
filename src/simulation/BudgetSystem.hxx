@@ -16,6 +16,14 @@ struct BudgetSnapshot
   float balance        = 0.f; ///< taxRevenue − policyExpenses
 };
 
+struct BudgetPersistedState
+{
+  float runningBalance = 0.f;
+  float lastRevenue = 0.f;
+  float lastExpenses = 0.f;
+  int month = 0;
+};
+
 /**
  * @class BudgetSystem
  * @brief Tracks city income and expenditure each game-month.
@@ -62,6 +70,8 @@ public:
   float lastTaxRevenue()  const { return m_lastRevenue; }
   float lastExpenses()    const { return m_lastExpenses; }
   int   monthCounter()    const { return m_month; }
+  BudgetPersistedState persistedState() const;
+  void applyPersistedState(const BudgetPersistedState &state);
 
   const std::deque<BudgetSnapshot> &recentHistory() const { return m_history; }
 

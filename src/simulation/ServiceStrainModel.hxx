@@ -30,6 +30,7 @@ public:
             const CityIndicesData &indices);
 
   const ServiceStrainState &state() const { return m_state; }
+  ServiceStrainState &mutableState() { return m_state; }
 
 private:
   ServiceStrainModel() = default;

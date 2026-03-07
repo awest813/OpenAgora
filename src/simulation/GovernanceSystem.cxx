@@ -582,3 +582,32 @@ float GovernanceSystem::consumeBudgetAdjustment()
   m_budgetAdjustment = 0.f;
   return value;
 }
+
+GovernancePersistedState GovernanceSystem::persistedState() const
+{
+  GovernancePersistedState state;
+  state.approval = m_approval;
+  state.totalMonthsElapsed = m_totalMonthsElapsed;
+  state.monthsSinceCheckpoint = m_monthsSinceCheckpoint;
+  state.policyLockMonthsRemaining = m_policyLockMonthsRemaining;
+  state.policyConstrained = m_policyConstrained;
+  state.lostElection = m_lostElection;
+  state.checkpointPending = m_checkpointPending;
+  state.taxEfficiencyMultiplier = m_taxEfficiencyMultiplier;
+  state.incomeModifier = m_incomeModifier;
+  return state;
+}
+
+void GovernanceSystem::applyPersistedState(const GovernancePersistedState &state)
+{
+  m_approval = clamp100(state.approval);
+  m_totalMonthsElapsed = std::max(0, state.totalMonthsElapsed);
+  m_monthsSinceCheckpoint = std::max(0, state.monthsSinceCheckpoint);
+  m_policyLockMonthsRemaining = std::max(0, state.policyLockMonthsRemaining);
+  m_policyConstrained = state.policyConstrained;
+  m_lostElection = state.lostElection;
+  m_checkpointPending = state.checkpointPending;
+  m_taxEfficiencyMultiplier = std::max(0.1f, std::min(2.f, state.taxEfficiencyMultiplier));
+  m_incomeModifier = std::max(0.1f, std::min(2.f, state.incomeModifier));
+  updatePolicyAvailability();
+}

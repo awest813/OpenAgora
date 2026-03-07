@@ -56,6 +56,19 @@ struct GovernancePolicyOption
   bool selected = false;
 };
 
+struct GovernancePersistedState
+{
+  float approval = 50.f;
+  int totalMonthsElapsed = 0;
+  int monthsSinceCheckpoint = 0;
+  int policyLockMonthsRemaining = 0;
+  bool policyConstrained = false;
+  bool lostElection = false;
+  bool checkpointPending = false;
+  float taxEfficiencyMultiplier = 1.f;
+  float incomeModifier = 1.f;
+};
+
 /**
  * @class GovernanceSystem
  * @brief Lightweight monthly governance loop with elections/events.
@@ -86,6 +99,8 @@ public:
   const GovernanceEventDefinition *pendingEventChoice() const;
   bool choosePendingEventOption(const std::string &optionId);
   float consumeBudgetAdjustment();
+  GovernancePersistedState persistedState() const;
+  void applyPersistedState(const GovernancePersistedState &state);
   int monthsUntilCheckpoint() const;
   int monthCounter() const { return m_totalMonthsElapsed; }
   int maxSelectablePolicies() const { return m_policyConstrained ? 1 : 2; }

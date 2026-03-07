@@ -121,3 +121,29 @@ TEST_CASE("Temporary policy auto-expires after duration", "[simulation][policy][
   CHECK_FALSE(engine.isActive("temporary"));
 }
 
+TEST_CASE("PolicyEngine can apply effects to simulation context fields", "[simulation][policy][policy_v2]")
+{
+  PolicyEngine &engine = PolicyEngine::instance();
+  engine.clearPolicies();
+
+  PolicyDefinition def = makeBasePolicy("context_target");
+  def.levels = {PolicyLevelDefinition{
+      1,
+      100,
+      0.f,
+      {
+          PolicyEffect{"taxEfficiency", "add", 0.2f},
+          PolicyEffect{"growthRateModifier", "multiply", 1.1f},
+      }}};
+  engine.addDefinition(def);
+  REQUIRE(engine.setPolicyLevel("context_target", 1));
+
+  AffordabilityState aff{};
+  CityIndicesData idx{};
+  SimulationContextData ctx{};
+
+  engine.tick(aff, idx, &ctx);
+  CHECK(ctx.taxEfficiency == Approx(1.2f));
+  CHECK(ctx.growthRateModifier == Approx(1.1f));
+}
+
