@@ -1,5 +1,7 @@
 {
   "id": "volunteer_cleanup_wave",
+  "category": "community",
+  "severity": 1,
   "trigger_all": [
     { "index": "publicTrust", "op": "gt", "value": 60 },
     { "index": "pollutionIndex", "op": "lt", "value": 50 }

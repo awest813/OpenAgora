@@ -1,5 +1,7 @@
 {
   "id": "business_exodus",
+  "category": "economy",
+  "severity": 2,
   "trigger": { "index": "jobsIndex", "op": "lt", "value": 25 },
   "cooldown_months": 12,
   "notification": "Several major employers have relocated to neighbouring cities due to a poor business environment.",

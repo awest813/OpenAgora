@@ -104,6 +104,8 @@ void GovernanceSystem::loadEventDefinitions()
 
     GovernanceEventDefinition eventDef;
     eventDef.id = parsed.value("id", filePath.stem().string());
+    eventDef.category = parsed.value("category", std::string{"general"});
+    eventDef.severity = std::max(1, std::min(3, parsed.value("severity", 1)));
     eventDef.cooldownMonths = std::max(0, parsed.value("cooldown_months", 0));
     eventDef.notification = parsed.value("notification", std::string{});
 
@@ -469,14 +471,14 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
       selectedEvent.monthsUntilReady = selectedEvent.cooldownMonths;
       if (!selectedEvent.notification.empty())
       {
-        pushNotification(selectedEvent.notification);
+        pushNotification(selectedEvent.notification, selectedEvent.category, selectedEvent.severity);
       }
 
       if (!selectedEvent.choices.empty())
       {
         m_hasPendingEventChoice = true;
         m_pendingEventChoice = selectedEvent;
-        pushNotification("Decision required: " + selectedEvent.id);
+        pushNotification("Decision required: " + selectedEvent.id, selectedEvent.category, selectedEvent.severity);
       }
       else
       {
@@ -532,17 +534,17 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
       if (m_approval < m_softFailThreshold)
       {
         m_lostElection = true;
-        pushNotification("Election result: You lost re-election. Sandbox mode continues.");
+        pushNotification("Election result: You lost re-election. Sandbox mode continues.", "governance", 3);
       }
       else
       {
         m_lostElection = false;
-        pushNotification("Election result: Re-elected by city council.");
+        pushNotification("Election result: Re-elected by city council.", "governance", 1);
       }
 
       std::ostringstream checkpointMsg;
       checkpointMsg << "Council checkpoint: approval " << static_cast<int>(std::round(m_approval)) << "/100.";
-      pushNotification(checkpointMsg.str());
+      pushNotification(checkpointMsg.str(), "governance", 2);
     }
   }
 }
@@ -622,9 +624,10 @@ int GovernanceSystem::selectedPolicyCount() const
                                         [](const GovernancePolicyOption &option) { return option.selected; }));
 }
 
-void GovernanceSystem::pushNotification(const std::string &message)
+void GovernanceSystem::pushNotification(const std::string &message, const std::string &category, int severity)
 {
-  m_notifications.push_back({m_totalMonthsElapsed, message});
+  const int clampedSeverity = std::max(1, std::min(3, severity));
+  m_notifications.push_back({m_totalMonthsElapsed, category, clampedSeverity, message});
   if (m_notifications.size() > MAX_NOTIFICATIONS)
   {
     m_notifications.pop_front();
@@ -671,7 +674,7 @@ bool GovernanceSystem::choosePendingEventOption(const std::string &optionId)
   m_approval = clamp100(approvalValue);
   m_budgetAdjustment += std::max(0.f, optionIt->budgetCost);
   m_hasPendingEventChoice = false;
-  pushNotification("Decision enacted: " + optionIt->label);
+  pushNotification("Decision enacted: " + optionIt->label, m_pendingEventChoice.category, m_pendingEventChoice.severity);
   m_pendingEventChoice = GovernanceEventDefinition{};
   return true;
 }

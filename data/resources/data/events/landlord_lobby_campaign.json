@@ -1,5 +1,7 @@
 {
   "id": "landlord_lobby_campaign",
+  "category": "politics",
+  "severity": 2,
   "trigger_all": [
     { "index": "affordabilityIndex", "op": "lt", "value": 45 },
     { "index": "publicTrust", "op": "lt", "value": 55 }

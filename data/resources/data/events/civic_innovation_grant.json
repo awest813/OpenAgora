@@ -1,5 +1,7 @@
 {
   "id": "civic_innovation_grant",
+  "category": "economy",
+  "severity": 1,
   "trigger_all": [
     { "index": "jobsIndex", "op": "gt", "value": 55 },
     { "index": "publicTrust", "op": "gt", "value": 50 }

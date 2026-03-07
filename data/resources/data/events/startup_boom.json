@@ -1,5 +1,7 @@
 {
   "id": "startup_boom",
+  "category": "economy",
+  "severity": 1,
   "trigger": { "index": "jobsIndex", "op": "gt", "value": 65 },
   "cooldown_months": 12,
   "notification": "A wave of startup investment has arrived, creating new jobs and boosting confidence.",

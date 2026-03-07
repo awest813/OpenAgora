@@ -1,5 +1,7 @@
 {
   "id": "rail_signal_failure",
+  "category": "infrastructure",
+  "severity": 3,
   "trigger": { "index": "commuteIndex", "op": "lt", "value": 35 },
   "cooldown_months": 9,
   "notification": "A cascade of rail signal failures has crippled the central transit spine.",

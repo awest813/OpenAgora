@@ -1,5 +1,7 @@
 {
   "id": "infrastructure_spiral",
+  "category": "infrastructure",
+  "severity": 3,
   "trigger_all": [
     { "index": "commuteIndex", "op": "lt", "value": 35 },
     { "index": "safetyIndex", "op": "lt", "value": 45 }

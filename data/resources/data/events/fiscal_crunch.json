@@ -1,5 +1,7 @@
 {
   "id": "fiscal_crunch",
+  "category": "politics",
+  "severity": 3,
   "trigger": { "index": "publicTrust", "op": "lt", "value": 50 },
   "cooldown_months": 10,
   "notification": "The treasury warns of a fiscal crunch. The council demands an immediate response.",

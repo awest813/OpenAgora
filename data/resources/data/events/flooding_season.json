@@ -1,5 +1,7 @@
 {
   "id": "flooding_season",
+  "category": "climate",
+  "severity": 3,
   "trigger_any": [
     { "index": "commuteIndex", "op": "lt", "value": 45 },
     { "index": "pollutionIndex", "op": "lt", "value": 35 }

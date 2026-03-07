@@ -1,5 +1,7 @@
 {
   "id": "neighborhood_watch_success",
+  "category": "community",
+  "severity": 1,
   "trigger": { "index": "safetyIndex", "op": "gt", "value": 70 },
   "cooldown_months": 10,
   "notification": "Neighborhood watch programs report sustained crime reductions across multiple districts.",

@@ -25,6 +25,8 @@ struct GovernanceTrigger
 struct GovernanceEventDefinition
 {
   std::string id;
+  std::string category = "general";
+  int severity = 1; ///< 1=low,2=medium,3=high
   GovernanceTrigger trigger;
   std::vector<GovernanceTrigger> triggerAll;
   std::vector<GovernanceTrigger> triggerAny;
@@ -49,6 +51,8 @@ struct GovernanceEventDefinition
 struct GovernanceNotification
 {
   int month = 0;
+  std::string category = "general";
+  int severity = 1;
   std::string text;
 };
 
@@ -141,7 +145,7 @@ private:
 
   void updatePolicyAvailability();
   int selectedPolicyCount() const;
-  void pushNotification(const std::string &message);
+  void pushNotification(const std::string &message, const std::string &category = "general", int severity = 1);
 
   int m_checkpointIntervalMonths = 6;
   float m_constraintThreshold = 40.f;
