@@ -220,6 +220,8 @@ void SettingsMenu::draw() const
     uiManager.closeMenu();
     Settings::instance().resetSettingsToDefaults();
   }
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Reset all settings to defaults");
   ui::PopStyleColor(3);
 
   UITheme::popButtonStyle();
