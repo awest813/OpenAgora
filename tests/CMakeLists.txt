@@ -40,6 +40,7 @@ LIST(APPEND TEST_SOURCES
         simulation/ServiceStrainModel.cxx
         simulation/ScenarioCatalog.cxx
         simulation/ContentValidation.cxx
+        simulation/ZoneGrowthFormulas.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx

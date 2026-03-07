@@ -110,16 +110,30 @@ void ZoneManager::spawnBuildings()
           free++;
       }
 
+      // Combine the global governance multiplier with the zone-type-specific
+      // economy multiplier so each zone type responds to its own economic signals.
+      float typeMultiplier = m_growthRateMultiplier;
+      const ZoneType zone = zoneArea.getZone();
+      if (zone == +ZoneType::RESIDENTIAL)
+        typeMultiplier *= m_residentialGrowthMultiplier;
+      else if (zone == +ZoneType::COMMERCIAL)
+        typeMultiplier *= m_commercialGrowthMultiplier;
+      else if (zone == +ZoneType::INDUSTRIAL)
+        typeMultiplier *= m_industrialGrowthMultiplier;
+
+      // Clamp the combined multiplier to a sensible range.
+      typeMultiplier = std::max(0.f, std::min(2.f, typeMultiplier));
+
       // For rates below 1.0, skip this area with probability (1 – rate)
       // so that building growth slows proportionally.
-      if (m_growthRateMultiplier < 1.f && dist(rng) > m_growthRateMultiplier)
+      if (typeMultiplier < 1.f && dist(rng) > typeMultiplier)
         continue;
 
       zoneArea.spawnBuildings();
 
       // For rates above 1.0, give a bonus spawn attempt with probability
       // equal to the fractional excess (e.g. 1.10 → 10 % extra chance).
-      if (m_growthRateMultiplier > 1.f && dist(rng) < (m_growthRateMultiplier - 1.f))
+      if (typeMultiplier > 1.f && dist(rng) < (typeMultiplier - 1.f))
         zoneArea.spawnBuildings();
     }
   }
@@ -333,4 +347,11 @@ void ZoneManager::setGrowthRateMultiplier(float rate)
 {
   // Clamp to a reasonable range: 0 stops all growth, >2 is excessive.
   m_growthRateMultiplier = std::max(0.f, std::min(2.f, rate));
+}
+
+void ZoneManager::setZoneTypeGrowthMultipliers(float residential, float commercial, float industrial)
+{
+  m_residentialGrowthMultiplier = std::max(0.f, std::min(2.f, residential));
+  m_commercialGrowthMultiplier  = std::max(0.f, std::min(2.f, commercial));
+  m_industrialGrowthMultiplier  = std::max(0.f, std::min(2.f, industrial));
 }

@@ -278,6 +278,86 @@ Integrated into `GamePlay::runMonthlySimulationTick()` behind the `budget_system
 
 **UI integration:** BudgetSystem balance shown in PolicyPanel header ✅
 
+### 2.5.1 Economy Depth Model ✅
+
+**File:** `src/simulation/EconomyDepthModel.hxx/.cxx`
+
+Tracks four deeper economic state variables updated every game-month:
+
+| Field | Description |
+|-------|-------------|
+| `unemploymentPressure` | [0–100] – higher = more unemployment |
+| `wagePressure` | [0–100] – higher = stronger labour demand |
+| `businessConfidence` | [0–100] – higher = stronger investment appetite |
+| `debtStress` | [0–100] – higher = greater fiscal strain |
+
+These are stored in `SimulationContextData` and exposed to all UI panels.
+
+**Feature flag:** `economy_depth_model: true` (now enabled) ✅
+
+**Tests:** `tests/simulation/EconomyDepthModel.cxx` – 3 unit tests ✅
+
+### 2.5.2 Service Strain Model ✅
+
+**File:** `src/simulation/ServiceStrainModel.hxx/.cxx`
+
+Tracks four public-service reliability/stress metrics every game-month:
+
+| Field | Description |
+|-------|-------------|
+| `transitReliability` | [0–100] – higher = better service |
+| `safetyCapacityLoad` | [0–100] – higher = more overloaded |
+| `educationAccessStress` | [0–100] – higher = poorer access |
+| `healthAccessStress` | [0–100] – higher = poorer access |
+
+These are stored in `SimulationContextData` and displayed in EconomyPanel.
+
+**Feature flag:** `service_strain_model: true` (now enabled) ✅
+
+**Tests:** `tests/simulation/ServiceStrainModel.cxx` – 3 unit tests ✅
+
+### 2.5.3 Economy Multipliers → Zone Growth ✅
+
+**Files:** `src/simulation/ZoneGrowthFormulas.hxx`, `src/game/ZoneManager.hxx/.cxx`, `src/game/GamePlay.cxx`
+
+Per-zone-type growth multipliers now applied every game-month so that the player's
+economic policies visibly change *how* their city develops – not just the indices:
+
+| Zone Type | Driver | Boost condition | Penalty condition |
+|-----------|--------|-----------------|-------------------|
+| **Residential** | `affordabilityIndex` | ≥ 65 → ×1.15 | < 30 → ×0.80 |
+| **Commercial** | `businessConfidence` + `unemploymentPressure` | confidence ≥ 65 → ×1.15 | confidence < 35 → ×0.85; unemployment > 70 → −10% |
+| **Industrial** | `pollutionIndex` + `debtStress` | pollution < 30 → ×1.10 | pollution > 70 → ×0.80; debt > 60 → −15% |
+
+Fallback: when `economy_depth_model` is disabled, commercial growth uses `jobsIndex` directly.
+
+The multiplier logic lives in a pure inline function `computeZoneGrowthMultipliers()` in
+`ZoneGrowthFormulas.hxx` so it can be unit-tested without SDL.
+
+`ZoneManager::setZoneTypeGrowthMultipliers()` stores per-type values that are combined
+with the global governance multiplier in `spawnBuildings()`.
+
+**Tests:** `tests/simulation/ZoneGrowthFormulas.cxx` – 10 unit tests ✅
+
+### 2.5.4 Economy Panel + Service Strain UI ✅
+
+**File:** `src/game/ui/EconomyPanel.cxx`
+
+The Economy Panel now displays all eight economy-depth and service-strain metrics with:
+
+- **Colour-coded text** – green/yellow/red based on each metric's health direction
+- **Tooltips on hover** – explains what each value means and how to improve it
+- **Organised sections** – "Economy Depth" and "Service Strain" with section headers
+- **Balance colour** – green for positive, red for negative
+
+**Feature flags:** `economy_panel: true`, `event_log_panel: true` (both now enabled) ✅
+
+### Phase 2.5 Milestone ✅
+Player can now see that their policies change *how their city grows*: affordable
+cities expand faster residentially, confident economies spawn more commercial
+buildings, and polluted or debt-ridden cities see their industrial sector slow down.
+All eight economy/service metrics are visible with contextual colour coding and tooltips.
+
 ---
 
 ## Phase 3 – Original IP Conversion (Ongoing / D-track)
@@ -328,9 +408,10 @@ src/
 │   ├── EconomyDepthModel.hxx/.cxx     ✅
 │   ├── ServiceStrainModel.hxx/.cxx    ✅
 │   ├── SimulationContext.hxx/.cxx     ✅
+│   ├── ZoneGrowthFormulas.hxx         ✅ (pure zone-type multiplier logic, testable)
 │   └── ScenarioCatalog.hxx/.cxx       ✅
 ├── game/           ← existing zone/power managers + new governance
-│   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick + churn)
+│   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick + churn + zone-type growth wiring)
 │   └── ui/         ← ImGui panels
 │       ├── CityIndicesPanel.hxx/.cxx  ✅
 │       ├── GovernancePanel.hxx/.cxx   ✅
