@@ -1,0 +1,13 @@
+{
+  "id": "teacher_shortage",
+  "category": "services",
+  "severity": 2,
+  "trigger": { "index": "jobsIndex", "op": "lt", "value": 35 },
+  "cooldown_months": 11,
+  "notification": "School districts are reporting teacher shortages, increasing class sizes and community frustration.",
+  "effects": [
+    { "target": "publicTrust", "op": "add", "value": -6.0 },
+    { "target": "medianIncome", "op": "multiply", "value": 0.98 },
+    { "target": "taxEfficiency", "op": "multiply", "value": 0.96 }
+  ]
+}

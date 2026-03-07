@@ -3,6 +3,8 @@
 
 #include "../util/Singleton.hxx"
 
+#include <string>
+
 /**
  * @class FeatureFlags
  * @brief Reads FeatureFlags.json and gates in-development systems at runtime.
@@ -62,6 +64,18 @@ public:
   /// Toast-style notification overlay for governance events.
   bool notificationOverlay() const { return m_notificationOverlay; }
 
+  /// Extended economic simulation layer (employment, debt stress, confidence).
+  bool economyDepthModel() const { return m_economyDepthModel; }
+
+  /// Extended service simulation layer (transit/safety/education/health strain).
+  bool serviceStrainModel() const { return m_serviceStrainModel; }
+
+  /// Economy analysis panel showing deeper city-economic indicators.
+  bool economyPanel() const { return m_economyPanel; }
+
+  /// Scrollable full governance event log panel.
+  bool eventLogPanel() const { return m_eventLogPanel; }
+
   /// Governance checkpoint interval in in-game months.
   int governanceCheckpointMonths() const { return m_governanceCheckpointMonths; }
 
@@ -77,6 +91,9 @@ public:
   /// Number of months policy constraints remain after a failed checkpoint.
   int governancePolicyLockMonths() const { return m_governancePolicyLockMonths; }
 
+  /// Optional scenario id applied to each new game start (empty disables).
+  const std::string &defaultScenarioId() const { return m_defaultScenarioId; }
+
 private:
   FeatureFlags() = default;
   ~FeatureFlags() = default;
@@ -91,12 +108,17 @@ private:
   bool m_budgetSystem         = false;
   bool m_policyPanel          = false;
   bool m_notificationOverlay  = false;
+  bool m_economyDepthModel    = false;
+  bool m_serviceStrainModel   = false;
+  bool m_economyPanel         = false;
+  bool m_eventLogPanel        = false;
 
   int m_governanceCheckpointMonths = 6;
   float m_governanceConstraintThreshold = 40.f;
   float m_governanceEventThreshold = 30.f;
   float m_governanceSoftFailThreshold = 15.f;
   int m_governancePolicyLockMonths = 3;
+  std::string m_defaultScenarioId;
 };
 
 #endif // FEATURE_FLAGS_HXX_

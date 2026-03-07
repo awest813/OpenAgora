@@ -1,0 +1,45 @@
+{
+  "id": "landlord_lobby_campaign",
+  "category": "politics",
+  "severity": 2,
+  "trigger_all": [
+    { "index": "affordabilityIndex", "op": "lt", "value": 45 },
+    { "index": "publicTrust", "op": "lt", "value": 55 }
+  ],
+  "min_month": 5,
+  "cooldown_months": 12,
+  "weight": 1.0,
+  "notification": "A coordinated landlord lobby campaign is pressuring council to weaken tenant protections.",
+  "choices": [
+    {
+      "id": "stand_firm",
+      "label": "Stand Firm on Tenant Protections",
+      "description": "Maintain current protections at the cost of short-term business confidence.",
+      "budget_cost": 250,
+      "effects": [
+        { "target": "publicTrust", "op": "add", "value": 3.0 },
+        { "target": "taxEfficiency", "op": "add", "value": -0.03 }
+      ]
+    },
+    {
+      "id": "negotiate_compromise",
+      "label": "Negotiate a Compromise",
+      "description": "Trade partial concessions for calmer market conditions.",
+      "budget_cost": 100,
+      "effects": [
+        { "target": "publicTrust", "op": "add", "value": -1.0 },
+        { "target": "medianIncome", "op": "multiply", "value": 1.01 }
+      ]
+    },
+    {
+      "id": "fully_concede",
+      "label": "Fully Concede",
+      "description": "Prioritize market sentiment over tenant protections.",
+      "budget_cost": 0,
+      "effects": [
+        { "target": "publicTrust", "op": "add", "value": -6.0 },
+        { "target": "taxEfficiency", "op": "add", "value": 0.06 }
+      ]
+    }
+  ]
+}

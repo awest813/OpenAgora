@@ -109,11 +109,17 @@ The goal is to make *simulation logic* independent of SDL so it can:
 | `PolicyEngine` | `src/simulation/` | ✅ Done | Load policy JSON; apply effects each tick |
 | `GovernanceSystem` | `src/simulation/` | ✅ Done | Public trust, events, council checkpoints, soft-fail |
 | `BudgetSystem` | `src/simulation/` | ✅ Done | Monthly tax revenue, policy expenses, running balance |
+| `SimulationContext` | `src/simulation/` | ✅ Done | Cross-system monthly state bridge (governance/economy/services) |
+| `EconomyDepthModel` | `src/simulation/` | ✅ Done | Unemployment pressure, wage pressure, confidence, debt stress |
+| `ServiceStrainModel` | `src/simulation/` | ✅ Done | Transit reliability + safety/education/health strain |
+| `ScenarioCatalog` | `src/simulation/` | ✅ Done | Load data-driven scenario presets |
 | `GamePlay` (monthly tick) | `src/game/` | ✅ Done | Orchestrates all simulation modules; applies population churn |
 | `CityIndicesPanel` | `src/game/ui/` | ✅ Done | ImGui sidebar for five indices + trend |
 | `GovernancePanel` | `src/game/ui/` | ✅ Done | Approval bar, event log, council checkpoint modal |
-| `PolicyPanel` | `src/game/ui/` | ✅ Done | Per-policy toggles with cost display and budget summary |
+| `PolicyPanel` | `src/game/ui/` | ✅ Done | Category-grouped policy levels, availability locks, budget summary |
 | `NotificationOverlay` | `src/game/ui/` | ✅ Done | Toast-style event notifications (8s auto-dismiss) |
+| `EventLogPanel` | `src/game/ui/` | ✅ Done | Scrollable full event history panel |
+| `EconomyPanel` | `src/game/ui/` | ✅ Done | Deep economy/service metrics panel |
 | `AffordabilityOverlay` | `src/engine/render/` | ✅ Done | Per-tile heatmap rendering |
 
 ### 2.3 New signals
@@ -419,11 +425,15 @@ C++17 with no display needed. Catch2 is already vendored.
 Implemented test files:
 - `tests/simulation/CityIndices.cxx` – 6 tests: empty-map defaults, all five index directions ✅
 - `tests/simulation/AffordabilityModel.cxx` – 7 tests: reset, rent/income logic, policy bonus, pressure accumulation, churn, recovery ✅
-- `tests/simulation/PolicyEngine.cxx` – 9 tests: active/inactive, add/multiply/set ops, clamping, multi-policy cost accumulation ✅
-- `tests/simulation/GovernanceSystem.cxx` – 5 tests: weighted approval, checkpoint cadence, policy constraints, soft-fail, event cooldown ✅
-- `tests/simulation/BudgetSystem.cxx` – 6 tests: reset, tax scaling, approval multipliers, expenses, balance accumulation, history rollover ✅
+- `tests/simulation/PolicyEngine.cxx` + `tests/simulation/PolicyEngineV2.cxx` – baseline + leveled policy constraints, durations, context targets ✅
+- `tests/simulation/GovernanceSystem.cxx` – weighted approval, checkpoint cadence, constraints, cooldowns, event thresholds, compound triggers, month windows, choice flows ✅
+- `tests/simulation/BudgetSystem.cxx` – reset, tax scaling, approval multipliers, expenses, accumulation, history rollover, persisted-state round-trip ✅
+- `tests/simulation/SimulationContext.cxx` – context reset/month progression ✅
+- `tests/simulation/EconomyDepthModel.cxx` – unemployment/wage/confidence/debt behavior ✅
+- `tests/simulation/ServiceStrainModel.cxx` – transit/safety/education/health strain behavior ✅
+- `tests/simulation/ScenarioCatalog.cxx` + `tests/simulation/ContentValidation.cxx` – scenario/content loading validation ✅
 
-All 33 simulation assertions pass. Run with:
+All simulation assertions pass (currently 225 assertions across 62 simulation test cases). Run with:
 ```
 ./Cytopia_Tests "[simulation]"
 ```

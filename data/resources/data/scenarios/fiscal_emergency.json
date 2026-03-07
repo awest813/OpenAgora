@@ -1,0 +1,12 @@
+{
+  "id": "fiscal_emergency",
+  "label": "Fiscal Emergency",
+  "description": "The city starts under severe budget stress with low trust and little room for policy mistakes.",
+  "starting_approval": 34,
+  "starting_balance": -2200,
+  "recommended_policies": [
+    "congestion_pricing",
+    "workforce_training_grants",
+    "community_policing"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "startup_boom",
+  "category": "economy",
+  "severity": 1,
+  "trigger": { "index": "jobsIndex", "op": "gt", "value": 65 },
+  "cooldown_months": 12,
+  "notification": "A wave of startup investment has arrived, creating new jobs and boosting confidence.",
+  "effects": [
+    { "target": "publicTrust", "op": "add", "value": 5.0 },
+    { "target": "taxEfficiency", "op": "add", "value": 0.08 },
+    { "target": "medianIncome", "op": "multiply", "value": 1.04 }
+  ]
+}

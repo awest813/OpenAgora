@@ -1,0 +1,29 @@
+{
+  "id": "public_health_clinics",
+  "label": "Neighborhood Health Clinics",
+  "description": "Deploys local clinics in underserved districts to reduce health-system overload and improve resilience.",
+  "category": "services",
+  "type": "service_boost",
+  "cost_per_month": 360,
+  "min_approval": 20,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 360,
+      "effects": [
+        { "target": "healthAccessStress", "op": "add", "value": -8.0 },
+        { "target": "safetyIndex", "op": "add", "value": 2.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 700,
+      "unlock_min_approval": 45,
+      "effects": [
+        { "target": "healthAccessStress", "op": "add", "value": -13.0 },
+        { "target": "safetyIndex", "op": "add", "value": 4.0 },
+        { "target": "taxEfficiency", "op": "add", "value": -0.02 }
+      ]
+    }
+  ]
+}

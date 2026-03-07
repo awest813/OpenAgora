@@ -1,0 +1,19 @@
+{
+  "id": "festival_tourism_boost",
+  "category": "economy",
+  "severity": 1,
+  "trigger_all": [
+    { "index": "commuteIndex", "op": "gt", "value": 55 },
+    { "index": "publicTrust", "op": "gt", "value": 55 }
+  ],
+  "min_month": 4,
+  "max_month": 36,
+  "cooldown_months": 10,
+  "weight": 0.9,
+  "notification": "A major regional festival chose your city as host, driving tourism and small business sales.",
+  "effects": [
+    { "target": "jobsIndex", "op": "add", "value": 4.0 },
+    { "target": "taxEfficiency", "op": "add", "value": 0.04 },
+    { "target": "publicTrust", "op": "add", "value": 3.0 }
+  ]
+}

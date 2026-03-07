@@ -1,0 +1,13 @@
+{
+  "id": "healthcare_strike",
+  "category": "services",
+  "severity": 2,
+  "trigger": { "index": "safetyIndex", "op": "lt", "value": 35 },
+  "cooldown_months": 8,
+  "notification": "Healthcare workers have begun a rotating strike over unsafe conditions and burnout.",
+  "effects": [
+    { "target": "publicTrust", "op": "add", "value": -7.0 },
+    { "target": "safetyIndex", "op": "add", "value": -4.0 },
+    { "target": "taxEfficiency", "op": "multiply", "value": 0.92 }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "rent_control",
+  "label": "Rent Stabilization",
+  "description": "Caps annual rent growth in vulnerable neighborhoods, easing displacement but dampening speculative investment.",
+  "category": "housing",
+  "type": "service_boost",
+  "cost_per_month": 350,
+  "min_approval": 25,
+  "exclusive_with": ["upzoning_incentives"],
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 350,
+      "effects": [
+        { "target": "displacementPressure", "op": "add", "value": -4.0 },
+        { "target": "affordabilityIndex", "op": "add", "value": 6.0 },
+        { "target": "businessConfidence", "op": "add", "value": -2.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 700,
+      "unlock_min_approval": 50,
+      "effects": [
+        { "target": "displacementPressure", "op": "add", "value": -8.0 },
+        { "target": "affordabilityIndex", "op": "add", "value": 10.0 },
+        { "target": "businessConfidence", "op": "add", "value": -4.0 }
+      ]
+    }
+  ]
+}

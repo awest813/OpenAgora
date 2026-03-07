@@ -1,0 +1,29 @@
+{
+  "id": "municipal_broadband",
+  "label": "Municipal Broadband Rollout",
+  "description": "Builds city-owned broadband infrastructure to improve business productivity and service access.",
+  "category": "economy",
+  "type": "service_boost",
+  "cost_per_month": 500,
+  "min_approval": 30,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 500,
+      "effects": [
+        { "target": "jobsIndex", "op": "add", "value": 4.0 },
+        { "target": "businessConfidence", "op": "add", "value": 6.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 940,
+      "unlock_min_approval": 55,
+      "effects": [
+        { "target": "jobsIndex", "op": "add", "value": 7.0 },
+        { "target": "businessConfidence", "op": "add", "value": 10.0 },
+        { "target": "taxEfficiency", "op": "add", "value": 0.03 }
+      ]
+    }
+  ]
+}

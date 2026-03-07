@@ -25,16 +25,34 @@ struct GovernanceTrigger
 struct GovernanceEventDefinition
 {
   std::string id;
+  std::string category = "general";
+  int severity = 1; ///< 1=low,2=medium,3=high
   GovernanceTrigger trigger;
+  std::vector<GovernanceTrigger> triggerAll;
+  std::vector<GovernanceTrigger> triggerAny;
+  int minMonth = 0;
+  int maxMonth = 0; ///< 0 means no upper bound
+  float weight = 1.f;
   int cooldownMonths = 0;
   std::string notification;
   std::vector<GovernanceEffect> effects;
+  struct Choice
+  {
+    std::string id;
+    std::string label;
+    std::string description;
+    float budgetCost = 0.f;
+    std::vector<GovernanceEffect> effects;
+  };
+  std::vector<Choice> choices;
   int monthsUntilReady = 0;
 };
 
 struct GovernanceNotification
 {
   int month = 0;
+  std::string category = "general";
+  int severity = 1;
   std::string text;
 };
 
@@ -45,6 +63,19 @@ struct GovernancePolicyOption
   std::string description;
   bool enabled = true;
   bool selected = false;
+};
+
+struct GovernancePersistedState
+{
+  float approval = 50.f;
+  int totalMonthsElapsed = 0;
+  int monthsSinceCheckpoint = 0;
+  int policyLockMonthsRemaining = 0;
+  bool policyConstrained = false;
+  bool lostElection = false;
+  bool checkpointPending = false;
+  float taxEfficiencyMultiplier = 1.f;
+  float incomeModifier = 1.f;
 };
 
 /**
@@ -71,6 +102,14 @@ public:
   bool policyConstrained() const { return m_policyConstrained; }
   bool lostElection() const { return m_lostElection; }
   bool checkpointPending() const { return m_checkpointPending; }
+  float taxEfficiencyMultiplier() const { return m_taxEfficiencyMultiplier; }
+  float incomeModifier() const { return m_incomeModifier; }
+  bool hasPendingEventChoice() const { return m_hasPendingEventChoice; }
+  const GovernanceEventDefinition *pendingEventChoice() const;
+  bool choosePendingEventOption(const std::string &optionId);
+  float consumeBudgetAdjustment();
+  GovernancePersistedState persistedState() const;
+  void applyPersistedState(const GovernancePersistedState &state);
   int monthsUntilCheckpoint() const;
   int monthCounter() const { return m_totalMonthsElapsed; }
   int maxSelectablePolicies() const { return m_policyConstrained ? 1 : 2; }
@@ -96,6 +135,9 @@ private:
   float computeApproval(const CityIndicesData &indices) const;
   float valueForTrigger(const std::string &indexKey, const CityIndicesData &indices, float currentApproval) const;
   bool evaluateTrigger(const GovernanceTrigger &trigger, const CityIndicesData &indices, float currentApproval) const;
+  bool evaluateEventDefinition(const GovernanceEventDefinition &eventDef, const CityIndicesData &indices,
+                               float currentApproval) const;
+  size_t selectWeightedEventIndex(const std::vector<size_t> &eligibleIndices) const;
 
   bool applyEffectToIndices(const GovernanceEffect &effect, CityIndicesData &indices);
   bool applyEffectToApproval(const GovernanceEffect &effect, float &approvalValue);
@@ -103,7 +145,7 @@ private:
 
   void updatePolicyAvailability();
   int selectedPolicyCount() const;
-  void pushNotification(const std::string &message);
+  void pushNotification(const std::string &message, const std::string &category = "general", int severity = 1);
 
   int m_checkpointIntervalMonths = 6;
   float m_constraintThreshold = 40.f;
@@ -122,6 +164,11 @@ private:
   bool m_policyConstrained = false;
   bool m_lostElection = false;
   bool m_checkpointPending = false;
+  float m_taxEfficiencyMultiplier = 1.f;
+  float m_incomeModifier = 1.f;
+  bool m_hasPendingEventChoice = false;
+  GovernanceEventDefinition m_pendingEventChoice;
+  float m_budgetAdjustment = 0.f;
 
   std::vector<GovernanceEventDefinition> m_events;
   std::vector<GovernancePolicyOption> m_policyOptions;

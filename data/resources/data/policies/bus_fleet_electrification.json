@@ -1,0 +1,30 @@
+{
+  "id": "bus_fleet_electrification",
+  "label": "Bus Fleet Electrification",
+  "description": "Accelerates electric bus conversion to improve reliability and cut corridor emissions.",
+  "category": "transit",
+  "type": "service_boost",
+  "cost_per_month": 540,
+  "min_approval": 30,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 540,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 4.0 },
+        { "target": "pollutionIndex", "op": "add", "value": -5.0 },
+        { "target": "transitReliability", "op": "add", "value": 6.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 980,
+      "unlock_min_approval": 58,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 8.0 },
+        { "target": "pollutionIndex", "op": "add", "value": -9.0 },
+        { "target": "transitReliability", "op": "add", "value": 11.0 }
+      ]
+    }
+  ]
+}

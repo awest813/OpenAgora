@@ -10,9 +10,14 @@
   "budget_system":          true,
   "policy_panel":           true,
   "notification_overlay":   true,
+  "economy_depth_model":    false,
+  "service_strain_model":   false,
+  "economy_panel":          false,
+  "event_log_panel":        false,
   "governance_checkpoint_months": 6,
   "governance_constraint_threshold": 40.0,
   "governance_event_threshold": 30.0,
   "governance_soft_fail_threshold": 15.0,
-  "governance_policy_lock_months": 3
+  "governance_policy_lock_months": 3,
+  "default_scenario_id": ""
 }

@@ -1,0 +1,17 @@
+{
+  "id": "civic_data_breach",
+  "category": "governance",
+  "severity": 3,
+  "trigger_any": [
+    { "index": "publicTrust", "op": "lt", "value": 50 },
+    { "index": "safetyIndex", "op": "lt", "value": 45 }
+  ],
+  "min_month": 6,
+  "cooldown_months": 13,
+  "weight": 0.9,
+  "notification": "A civic data breach exposed resident records, triggering widespread outrage.",
+  "effects": [
+    { "target": "publicTrust", "op": "add", "value": -9.0 },
+    { "target": "taxEfficiency", "op": "multiply", "value": 0.93 }
+  ]
+}

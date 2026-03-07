@@ -3,11 +3,16 @@
 #include "AffordabilityModel.hxx"
 #include "BudgetSystem.hxx"
 #include "CityIndices.hxx"
+#include "EconomyDepthModel.hxx"
 #include "GovernanceSystem.hxx"
 #include "PolicyEngine.hxx"
+#include "ServiceStrainModel.hxx"
+#include "SimulationContext.hxx"
 #include "../services/FeatureFlags.hxx"
 #include "LOG.hxx"
 #include "enums.hxx"
+
+#include <algorithm>
 
 void GamePlay::resetManagers()
 {
@@ -17,6 +22,9 @@ void GamePlay::resetManagers()
 
 void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
 {
+  SimulationContext::instance().advanceMonth();
+  SimulationContext::instance().mutableData().growthRateModifier = 1.f;
+
   // ── Collect tile snapshots ─────────────────────────────────────────────────
   std::vector<const TileData *> buildingTiles;
   int roadTileCount  = 0;
@@ -43,6 +51,8 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
   }
 
   CityIndicesData indices = CityIndices::instance().current();
+  float policyExpenses = 0.f;
+  float approval = 50.f;
 
   // ── PolicyEngine ───────────────────────────────────────────────────────────
   // When the json_content_pipeline flag is off, policies are not loaded and
@@ -53,7 +63,7 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
     // If the affordability system is off but policies are on, apply effects
     // directly to the indices snapshot so they still influence governance.
     AffordabilityState probeAff{};
-    PolicyEngine::instance().tick(probeAff, indices);
+    PolicyEngine::instance().tick(probeAff, indices, &SimulationContext::instance().mutableData());
   }
 
   // ── AffordabilityModel ─────────────────────────────────────────────────────
@@ -67,7 +77,8 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
     {
       AffordabilityState probe = AffordabilityModel::instance().state();
       CityIndicesData dummyIndices = indices;
-      PolicyEngine::instance().tick(probe, dummyIndices);
+      SimulationContextData contextProbe = SimulationContext::instance().data();
+      PolicyEngine::instance().tick(probe, dummyIndices, &contextProbe);
       policyAffordabilityBonus =
           probe.affordabilityIndex - AffordabilityModel::instance().state().affordabilityIndex;
     }
@@ -85,7 +96,7 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
     GovernanceSystem::instance().tickMonth(indices);
 
     // Apply approval-driven zone growth rate (DESIGN.md §4.5).
-    const float approval = GovernanceSystem::instance().approval();
+    approval = GovernanceSystem::instance().approval();
     float growthRate = 1.0f;
     if (approval >= 85.f)
       growthRate = 1.20f;
@@ -93,7 +104,17 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
       growthRate = 1.10f;
     else if (approval < 30.f)
       growthRate = 0.90f;
-    m_ZoneManager.setGrowthRateMultiplier(growthRate);
+
+    SimulationContextData &ctx = SimulationContext::instance().mutableData();
+    ctx.growthRateModifier = growthRate;
+    ctx.approvalMultiplier = (approval > 70.f) ? 1.10f : ((approval < 30.f) ? 0.80f : 1.00f);
+    ctx.taxEfficiency = GovernanceSystem::instance().taxEfficiencyMultiplier() * ctx.approvalMultiplier;
+
+    if (flags.affordabilitySystem())
+    {
+      AffordabilityState &affState = AffordabilityModel::instance().mutableState();
+      affState.medianIncome = std::max(0.f, std::min(100.f, affState.medianIncome * GovernanceSystem::instance().incomeModifier()));
+    }
   }
 
   // ── BudgetSystem ───────────────────────────────────────────────────────────
@@ -105,16 +126,57 @@ void GamePlay::runMonthlySimulationTick(const std::vector<MapNode> &mapNodes)
       totalInhabitants += tile->inhabitants;
 
     // Determine policy expenses: run the real tick now (post-affordability)
-    float policyExpenses = 0.f;
     if (flags.jsonContentPipeline())
     {
       AffordabilityState affCopy = AffordabilityModel::instance().state();
       CityIndicesData idxCopy = indices;
-      policyExpenses = static_cast<float>(PolicyEngine::instance().tick(affCopy, idxCopy));
+      policyExpenses = static_cast<float>(PolicyEngine::instance().tick(affCopy, idxCopy,
+                                                                        &SimulationContext::instance().mutableData()));
     }
 
-    const float approval = flags.governanceLayer() ? GovernanceSystem::instance().approval() : 50.f;
-    BudgetSystem::instance().tick(totalInhabitants, policyExpenses, approval);
+    if (flags.governanceLayer())
+    {
+      policyExpenses += GovernanceSystem::instance().consumeBudgetAdjustment();
+    }
+
+    approval = flags.governanceLayer() ? GovernanceSystem::instance().approval() : 50.f;
+    const float budgetApproval =
+        flags.governanceLayer()
+            ? std::max(0.f, std::min(100.f, approval * GovernanceSystem::instance().taxEfficiencyMultiplier()))
+            : approval;
+    BudgetSystem::instance().tick(totalInhabitants, policyExpenses, budgetApproval);
+  }
+
+  if (flags.governanceLayer() || flags.jsonContentPipeline())
+  {
+    m_ZoneManager.setGrowthRateMultiplier(SimulationContext::instance().data().growthRateModifier);
+  }
+
+  // ── EconomyDepthModel ──────────────────────────────────────────────────────
+  if (flags.economyDepthModel())
+  {
+    const float runningBalance = flags.budgetSystem() ? BudgetSystem::instance().currentBalance() : 0.f;
+    EconomyDepthModel::instance().tick(buildingTiles, indices, runningBalance, policyExpenses, approval);
+
+    const EconomyDepthState &economy = EconomyDepthModel::instance().state();
+    SimulationContextData &ctx = SimulationContext::instance().mutableData();
+    ctx.unemploymentPressure = economy.unemploymentPressure;
+    ctx.wagePressure         = economy.wagePressure;
+    ctx.businessConfidence   = economy.businessConfidence;
+    ctx.debtStress           = economy.debtStress;
+  }
+
+  // ── ServiceStrainModel ─────────────────────────────────────────────────────
+  if (flags.serviceStrainModel())
+  {
+    ServiceStrainModel::instance().tick(buildingTiles, roadTileCount, totalTiles, indices);
+
+    const ServiceStrainState &services = ServiceStrainModel::instance().state();
+    SimulationContextData &ctx = SimulationContext::instance().mutableData();
+    ctx.transitReliability    = services.transitReliability;
+    ctx.safetyCapacityLoad    = services.safetyCapacityLoad;
+    ctx.educationAccessStress = services.educationAccessStress;
+    ctx.healthAccessStress    = services.healthAccessStress;
   }
 
   // ── Population churn ───────────────────────────────────────────────────────

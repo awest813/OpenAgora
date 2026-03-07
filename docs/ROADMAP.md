@@ -211,7 +211,7 @@ Gameplay effects of `publicTrust` (planned):
 - > 70: Growth bonus (+10%), reduced upkeep costs
 
 **Status:** approval score computed by `GovernanceSystem::tickMonth()` and displayed in `GovernancePanel`;
-gameplay multipliers (tax efficiency, growth rate) pending economy system integration.
+gameplay multipliers now wired into growth and budget/tax behavior, including event-driven tax efficiency modifiers.
 
 ### 2.2 Council Checkpoint (Approval Gate) ✅
 
@@ -228,7 +228,7 @@ Every N in-game months (default 6, configurable via `FeatureFlags.json`):
 
 **Data-driven** (`data/resources/data/events/`):
 
-Three events implemented:
+Ten data-driven events currently bundled (including positive, negative, and choice-based events):
 
 | Event | Trigger | Effects | Cooldown |
 |-------|---------|---------|----------|
@@ -236,7 +236,8 @@ Three events implemented:
 | `business_exodus` | jobsIndex < 25 | publicTrust −10, taxEfficiency ×0.90, medianIncome ×0.95 | 12 months |
 | `transit_breakdown` | commuteIndex < 20 | commuteIndex −15, publicTrust −6, pollutionIndex +8 | 9 months |
 
-`GovernanceSystem` evaluates all loaded events each month tick, respects per-event cooldowns, and fires notifications.
+`GovernanceSystem` evaluates all loaded events each month tick, respects per-event cooldowns, supports global distress
+threshold gating, and can queue player-choice event decisions with budget effects.
 Events evaluate against all six trigger targets: `affordabilityIndex`, `safetyIndex`, `jobsIndex`,
 `commuteIndex`, `pollutionIndex`, `publicTrust`.
 
@@ -245,7 +246,7 @@ Events evaluate against all six trigger targets: `affordabilityIndex`, `safetyIn
 - Recent events list in GovernancePanel sidebar (last 4 events with month stamps) ✅
 - Full log of up to 20 events in `GovernanceSystem::recentNotifications()` ✅
 - Toast-style overlay (bottom-right, auto-dismiss after 8s) ✅ `src/game/ui/NotificationOverlay.hxx/.cxx`
-- Full event log panel from toolbar – *pending*
+- Full event log panel from toolbar ✅ `src/game/ui/EventLogPanel.hxx/.cxx`
 
 ### Phase 2 Milestone
 The sim now has a **theme**, not just mechanics. The player manages a city *and* a
@@ -318,16 +319,22 @@ src/
 ├── simulation/     ← pure logic, tick-based, deterministic, no SDL
 │   ├── CityIndices.hxx/.cxx           ✅ (29 simulation tests pass)
 │   ├── AffordabilityModel.hxx/.cxx    ✅
-│   ├── GovernanceSystem.hxx/.cxx      ✅
-│   ├── PolicyEngine.hxx/.cxx          ✅
-│   └── BudgetSystem.hxx/.cxx          ✅ (6 tests)
+│   ├── GovernanceSystem.hxx/.cxx      ✅ (choice-based events + persistence hooks)
+│   ├── PolicyEngine.hxx/.cxx          ✅ (levels/prereqs/exclusivity)
+│   ├── BudgetSystem.hxx/.cxx          ✅ (persistence hooks)
+│   ├── EconomyDepthModel.hxx/.cxx     ✅
+│   ├── ServiceStrainModel.hxx/.cxx    ✅
+│   ├── SimulationContext.hxx/.cxx     ✅
+│   └── ScenarioCatalog.hxx/.cxx       ✅
 ├── game/           ← existing zone/power managers + new governance
 │   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick + churn)
 │   └── ui/         ← ImGui panels
 │       ├── CityIndicesPanel.hxx/.cxx  ✅
 │       ├── GovernancePanel.hxx/.cxx   ✅
-│       ├── PolicyPanel.hxx/.cxx       ✅
-│       └── NotificationOverlay.hxx/.cxx ✅
+│       ├── PolicyPanel.hxx/.cxx       ✅ (leveled controls + availability)
+│       ├── NotificationOverlay.hxx/.cxx ✅
+│       ├── EventLogPanel.hxx/.cxx     ✅
+│       └── EconomyPanel.hxx/.cxx      ✅
 ├── engine/         ← map, rendering, input (existing)
 │   └── render/
 │       └── AffordabilityOverlay.hxx/.cxx ✅ (heatmap overlay)
@@ -336,8 +343,9 @@ src/
     └── FeatureFlags.hxx/.cxx          ✅
 
 data/resources/data/
-├── policies/       ← JSON policy definitions  ✅ (2 policies)
-├── events/         ← JSON event trigger+effect definitions  ✅ (3 events)
+├── policies/       ← JSON policy definitions  ✅ (20 policies)
+├── events/         ← JSON event trigger+effect definitions  ✅ (20 events, incl. choice events + compound triggers)
+├── scenarios/      ← JSON scenario presets  ✅ (5 scenarios)
 └── FeatureFlags.json  ✅ (all Phase 1+2 flags now enabled)
 ```
 
@@ -359,7 +367,7 @@ Policy and event definitions live in JSON. No hardcoded balance numbers in C++.
 | 7 | ~~PolicyPanel UI: per-policy toggles + monthly cost display~~ ✅ | `ui`, `phase-1` |
 | 8 | ~~Event system: trigger + effect + notification UI~~ ✅ | `simulation`, `ui`, `phase-2` |
 | 9 | ~~Economy system: budget tracking with approval multipliers~~ ✅ | `simulation`, `phase-2` |
-| 10 | ~~Toast notification overlay~~ ✅ / Full event log panel *pending* | `ui`, `phase-2` |
+| 10 | ~~Toast notification overlay~~ ✅ / ~~Full event log panel~~ ✅ | `ui`, `phase-2` |
 
 ---
 
@@ -367,5 +375,5 @@ Policy and event definitions live in JSON. No hardcoded balance numbers in C++.
 
 **Phase 0:** Docs committed, labels created, feature flag system compiles and is tested. ✅  
 **Phase 1:** Affordability loop visible to player; heatmap toggleable; policies have measurable effect; devlog written. ✅  
-**Phase 2:** Council checkpoint fires ✅; events trigger from index thresholds ✅; publicTrust affects gameplay *(approval computed, economy effects pending)*; soft-fail scenario playable ✅.  
+**Phase 2:** Council checkpoint fires ✅; events trigger from index thresholds ✅; publicTrust affects gameplay ✅; soft-fail scenario playable ✅.  
 **Phase 3:** Binary and UI strings renamed; at least one original art asset in place; no Cytopia branding visible to player.

@@ -1,0 +1,13 @@
+{
+  "id": "smog_alert",
+  "category": "climate",
+  "severity": 2,
+  "trigger": { "index": "pollutionIndex", "op": "lt", "value": 30 },
+  "cooldown_months": 7,
+  "notification": "A severe smog alert has been issued. Outdoor activity restrictions are now in place.",
+  "effects": [
+    { "target": "publicTrust", "op": "add", "value": -5.0 },
+    { "target": "commuteIndex", "op": "add", "value": -3.0 },
+    { "target": "pollutionIndex", "op": "add", "value": -5.0 }
+  ]
+}

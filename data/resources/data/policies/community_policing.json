@@ -1,0 +1,29 @@
+{
+  "id": "community_policing",
+  "label": "Community Policing",
+  "description": "Shifts public safety strategy toward neighborhood patrols and early intervention programs.",
+  "category": "safety",
+  "type": "service_boost",
+  "cost_per_month": 380,
+  "min_approval": 20,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 380,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": 8.0 },
+        { "target": "safetyCapacityLoad", "op": "add", "value": -7.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 760,
+      "unlock_min_approval": 45,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": 13.0 },
+        { "target": "safetyCapacityLoad", "op": "add", "value": -12.0 },
+        { "target": "taxEfficiency", "op": "add", "value": -0.03 }
+      ]
+    }
+  ]
+}

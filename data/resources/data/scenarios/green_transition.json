@@ -1,0 +1,12 @@
+{
+  "id": "green_transition",
+  "label": "Green Transition",
+  "description": "Residents demand rapid decarbonization and cleaner neighborhoods while the economy retools.",
+  "starting_approval": 58,
+  "starting_balance": 1200,
+  "recommended_policies": [
+    "clean_air_act",
+    "public_health_clinics",
+    "transit_priority_lanes"
+  ]
+}

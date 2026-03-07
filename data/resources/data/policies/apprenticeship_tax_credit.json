@@ -1,0 +1,29 @@
+{
+  "id": "apprenticeship_tax_credit",
+  "label": "Apprenticeship Tax Credit",
+  "description": "Incentivizes employers to create paid apprenticeships in skilled trades and technical sectors.",
+  "category": "economy",
+  "type": "tax_modifier",
+  "cost_per_month": 280,
+  "min_approval": 22,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 280,
+      "effects": [
+        { "target": "jobsIndex", "op": "add", "value": 4.0 },
+        { "target": "unemploymentPressure", "op": "add", "value": -5.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 540,
+      "unlock_min_approval": 48,
+      "effects": [
+        { "target": "jobsIndex", "op": "add", "value": 8.0 },
+        { "target": "unemploymentPressure", "op": "add", "value": -9.0 },
+        { "target": "medianIncome", "op": "multiply", "value": 1.03 }
+      ]
+    }
+  ]
+}

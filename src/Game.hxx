@@ -54,6 +54,7 @@ public:
 
 private:
   void quit();
+  void applyConfiguredScenario();
   bool m_shutDown = false;
 
   GamePlay m_GamePlay;

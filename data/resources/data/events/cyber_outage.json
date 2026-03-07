@@ -1,0 +1,18 @@
+{
+  "id": "cyber_outage",
+  "category": "infrastructure",
+  "severity": 3,
+  "trigger_all": [
+    { "index": "publicTrust", "op": "lt", "value": 55 },
+    { "index": "jobsIndex", "op": "lt", "value": 50 }
+  ],
+  "min_month": 6,
+  "cooldown_months": 12,
+  "weight": 1.1,
+  "notification": "A coordinated cyber outage disrupted payment systems and municipal services.",
+  "effects": [
+    { "target": "jobsIndex", "op": "add", "value": -5.0 },
+    { "target": "commuteIndex", "op": "add", "value": -3.0 },
+    { "target": "publicTrust", "op": "add", "value": -7.0 }
+  ]
+}

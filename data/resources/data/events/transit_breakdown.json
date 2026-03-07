@@ -1,5 +1,7 @@
 {
   "id": "transit_breakdown",
+  "category": "infrastructure",
+  "severity": 3,
   "trigger": { "index": "commuteIndex", "op": "lt", "value": 20 },
   "cooldown_months": 9,
   "notification": "Chronic traffic gridlock has caused a public transit breakdown. Commute times have tripled.",

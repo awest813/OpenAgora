@@ -1,0 +1,30 @@
+{
+  "id": "clean_air_act",
+  "label": "Clean Air Act",
+  "description": "Enforces stricter emissions standards and funds urban greening to cut pollution exposure.",
+  "category": "environment",
+  "type": "tax_modifier",
+  "cost_per_month": 520,
+  "min_approval": 35,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 520,
+      "effects": [
+        { "target": "pollutionIndex", "op": "add", "value": -10.0 },
+        { "target": "healthAccessStress", "op": "add", "value": -6.0 },
+        { "target": "businessConfidence", "op": "add", "value": -2.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 980,
+      "unlock_min_approval": 60,
+      "effects": [
+        { "target": "pollutionIndex", "op": "add", "value": -16.0 },
+        { "target": "healthAccessStress", "op": "add", "value": -10.0 },
+        { "target": "businessConfidence", "op": "add", "value": -4.0 }
+      ]
+    }
+  ]
+}

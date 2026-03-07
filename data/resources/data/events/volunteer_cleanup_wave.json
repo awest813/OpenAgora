@@ -1,0 +1,17 @@
+{
+  "id": "volunteer_cleanup_wave",
+  "category": "community",
+  "severity": 1,
+  "trigger_all": [
+    { "index": "publicTrust", "op": "gt", "value": 60 },
+    { "index": "pollutionIndex", "op": "lt", "value": 50 }
+  ],
+  "cooldown_months": 11,
+  "weight": 0.9,
+  "notification": "A citywide volunteer cleanup wave has improved neighborhood conditions and civic morale.",
+  "effects": [
+    { "target": "pollutionIndex", "op": "add", "value": -5.0 },
+    { "target": "publicTrust", "op": "add", "value": 3.0 },
+    { "target": "taxEfficiency", "op": "add", "value": 0.02 }
+  ]
+}

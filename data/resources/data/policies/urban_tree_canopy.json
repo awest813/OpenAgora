@@ -1,0 +1,29 @@
+{
+  "id": "urban_tree_canopy",
+  "label": "Urban Tree Canopy Initiative",
+  "description": "Expands neighborhood tree cover to reduce heat islands and improve air quality.",
+  "category": "environment",
+  "type": "service_boost",
+  "cost_per_month": 300,
+  "min_approval": 24,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 300,
+      "effects": [
+        { "target": "pollutionIndex", "op": "add", "value": -3.0 },
+        { "target": "healthAccessStress", "op": "add", "value": -4.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 620,
+      "unlock_min_approval": 50,
+      "effects": [
+        { "target": "pollutionIndex", "op": "add", "value": -7.0 },
+        { "target": "healthAccessStress", "op": "add", "value": -8.0 },
+        { "target": "taxEfficiency", "op": "add", "value": 0.02 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "flooding_season",
+  "category": "climate",
+  "severity": 3,
+  "trigger_any": [
+    { "index": "commuteIndex", "op": "lt", "value": 45 },
+    { "index": "pollutionIndex", "op": "lt", "value": 35 }
+  ],
+  "min_month": 8,
+  "cooldown_months": 9,
+  "weight": 1.2,
+  "notification": "An intense flooding season has damaged roads and contaminated several districts.",
+  "effects": [
+    { "target": "commuteIndex", "op": "add", "value": -7.0 },
+    { "target": "pollutionIndex", "op": "add", "value": -6.0 },
+    { "target": "publicTrust", "op": "add", "value": -5.0 }
+  ]
+}

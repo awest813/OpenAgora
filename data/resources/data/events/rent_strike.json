@@ -1,5 +1,7 @@
 {
   "id": "rent_strike",
+  "category": "housing",
+  "severity": 2,
   "trigger": { "index": "affordabilityIndex", "op": "lt", "value": 30 },
   "cooldown_months": 6,
   "notification": "Tenants have gone on rent strike in the warehouse district. Tax revenues are falling.",

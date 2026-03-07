@@ -16,11 +16,17 @@
 #include "../game/ui/GovernancePanel.hxx"
 #include "../game/ui/PolicyPanel.hxx"
 #include "../game/ui/NotificationOverlay.hxx"
+#include "../game/ui/EconomyPanel.hxx"
+#include "../game/ui/EventLogPanel.hxx"
 #include <CityIndices.hxx>
 #include <GovernanceSystem.hxx>
 #include <AffordabilityModel.hxx>
 #include <PolicyEngine.hxx>
 #include <BudgetSystem.hxx>
+#include <EconomyDepthModel.hxx>
+#include <ServiceStrainModel.hxx>
+#include <ScenarioCatalog.hxx>
+#include <SimulationContext.hxx>
 #include "services/FeatureFlags.hxx"
 #include "services/FrameMetrics.hxx"
 #include "engine/GameObjects/MapNode.hxx"
@@ -191,6 +197,7 @@ void Game::run(bool SkipMenu)
   if (jsonPipelineEnabled)
   {
     PolicyEngine::instance().loadPolicies();
+    ScenarioCatalog::instance().loadScenarios();
   }
 
   if (featureFlags.policyPanel())
@@ -203,10 +210,32 @@ void Game::run(bool SkipMenu)
     uiManager.addPersistentMenu<NotificationOverlay>();
   }
 
+  if (featureFlags.economyPanel())
+  {
+    uiManager.addPersistentMenu<EconomyPanel>();
+  }
+
+  if (featureFlags.eventLogPanel())
+  {
+    uiManager.addPersistentMenu<EventLogPanel>();
+  }
+
   if (featureFlags.budgetSystem())
   {
     BudgetSystem::instance().reset();
   }
+
+  if (featureFlags.economyDepthModel())
+  {
+    EconomyDepthModel::instance().reset();
+  }
+
+  if (featureFlags.serviceStrainModel())
+  {
+    ServiceStrainModel::instance().reset();
+  }
+
+  SimulationContext::instance().reset();
 
   if (needsCityIndices)
   {
@@ -293,14 +322,33 @@ void Game::newGame(bool generateTerrain)
   m_GamePlay.resetManagers();
   GovernanceSystem::instance().reset();
   BudgetSystem::instance().reset();
+  EconomyDepthModel::instance().reset();
+  ServiceStrainModel::instance().reset();
+  SimulationContext::instance().reset();
+  for (const auto &definition : PolicyEngine::instance().definitions())
+    PolicyEngine::instance().setPolicyLevel(definition.id, 0);
+  applyConfiguredScenario();
 }
 
 void Game::loadGame(const std::string &fileName)
 {
   MapFunctions::instance().loadMapFromFile(fileName);
   m_GamePlay.resetManagers();
-  GovernanceSystem::instance().reset();
-  BudgetSystem::instance().reset();
+}
+
+void Game::applyConfiguredScenario()
+{
+  const std::string &scenarioId = FeatureFlags::instance().defaultScenarioId();
+  if (scenarioId.empty())
+    return;
+
+  if (!ScenarioCatalog::instance().applyScenarioById(scenarioId))
+  {
+    LOG(LOG_WARNING) << "Configured default scenario '" << scenarioId << "' was not applied.";
+    return;
+  }
+
+  LOG(LOG_INFO) << "Applied default scenario '" << scenarioId << "' to new game state.";
 }
 
 } // namespace Cytopia

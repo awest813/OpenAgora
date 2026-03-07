@@ -298,7 +298,6 @@ void UIManager::drawUI()
 
     // Frame-time history graph
     ui::PushStyleColor(ImGuiCol_PlotLines,      ImVec4(0.30f, 0.65f, 1.00f, 1.00f));
-    ui::PushStyleColor(ImGuiCol_PlotLinesFill,  ImVec4(0.15f, 0.18f, 0.24f, 1.00f));
     ui::PushStyleColor(ImGuiCol_FrameBg,        ImVec4(0.12f, 0.14f, 0.18f, 0.95f));
 
     const auto &hist   = fm.frameHistory();
@@ -307,7 +306,7 @@ void UIManager::drawUI()
     ui::PlotLines("##framegraph", hist.data(), FrameMetrics::HISTORY_SIZE,
                   fm.frameHistoryOffset(), graphLabel,
                   0.f, 50.f, ImVec2(-1.f, 50.f));
-    ui::PopStyleColor(3);
+    ui::PopStyleColor(2);
 
     // Active UI state
     ui::Spacing();

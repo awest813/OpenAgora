@@ -1,0 +1,18 @@
+{
+  "id": "port_strike",
+  "category": "economy",
+  "severity": 2,
+  "trigger_all": [
+    { "index": "jobsIndex", "op": "lt", "value": 45 },
+    { "index": "publicTrust", "op": "lt", "value": 60 }
+  ],
+  "min_month": 5,
+  "cooldown_months": 11,
+  "weight": 1.2,
+  "notification": "A regional port strike disrupted supply chains, reducing production and retail stock.",
+  "effects": [
+    { "target": "jobsIndex", "op": "add", "value": -6.0 },
+    { "target": "medianIncome", "op": "multiply", "value": 0.97 },
+    { "target": "publicTrust", "op": "add", "value": -4.0 }
+  ]
+}

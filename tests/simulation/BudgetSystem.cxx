@@ -109,3 +109,21 @@ TEST_CASE("History rolls over at MAX_HISTORY months", "[simulation][budget]")
   CHECK(budget.recentHistory().size() == 12);
   CHECK(budget.recentHistory().front().month == 2); // oldest retained is month 2
 }
+
+TEST_CASE("BudgetSystem persisted state round-trips", "[simulation][budget]")
+{
+  BudgetSystem &budget = BudgetSystem::instance();
+  budget.reset();
+
+  budget.tick(150, 50.f, 60.f);
+  budget.tick(200, 40.f, 65.f);
+  const BudgetPersistedState persisted = budget.persistedState();
+
+  budget.reset();
+  budget.applyPersistedState(persisted);
+
+  CHECK(budget.currentBalance() == Approx(persisted.runningBalance));
+  CHECK(budget.lastTaxRevenue() == Approx(persisted.lastRevenue));
+  CHECK(budget.lastExpenses() == Approx(persisted.lastExpenses));
+  CHECK(budget.monthCounter() == persisted.month);
+}

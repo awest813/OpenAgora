@@ -1,0 +1,35 @@
+{
+  "id": "heatwave_response",
+  "category": "climate",
+  "severity": 2,
+  "trigger_any": [
+    { "index": "pollutionIndex", "op": "lt", "value": 45 },
+    { "index": "safetyIndex", "op": "lt", "value": 45 }
+  ],
+  "min_month": 7,
+  "cooldown_months": 8,
+  "weight": 1.0,
+  "notification": "A prolonged heatwave is straining public services and vulnerable households.",
+  "choices": [
+    {
+      "id": "open_cooling_centers",
+      "label": "Open Cooling Centers",
+      "description": "Fund temporary cooling centers and hydration points.",
+      "budget_cost": 400,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": 4.0 },
+        { "target": "publicTrust", "op": "add", "value": 2.0 }
+      ]
+    },
+    {
+      "id": "minimal_response",
+      "label": "Minimal Response",
+      "description": "Issue advisories only to save budget this month.",
+      "budget_cost": 0,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": -4.0 },
+        { "target": "publicTrust", "op": "add", "value": -5.0 }
+      ]
+    }
+  ]
+}

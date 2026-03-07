@@ -1,0 +1,28 @@
+{
+  "id": "tenant_legal_aid",
+  "label": "Tenant Legal Aid Network",
+  "description": "Funds legal clinics and mediation services to prevent unlawful evictions and stabilize vulnerable households.",
+  "category": "housing",
+  "type": "service_boost",
+  "cost_per_month": 260,
+  "min_approval": 20,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 260,
+      "effects": [
+        { "target": "displacementPressure", "op": "add", "value": -3.0 },
+        { "target": "affordabilityIndex", "op": "add", "value": 4.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 520,
+      "unlock_min_approval": 45,
+      "effects": [
+        { "target": "displacementPressure", "op": "add", "value": -6.0 },
+        { "target": "affordabilityIndex", "op": "add", "value": 7.0 }
+      ]
+    }
+  ]
+}

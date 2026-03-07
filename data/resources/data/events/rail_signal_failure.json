@@ -1,0 +1,41 @@
+{
+  "id": "rail_signal_failure",
+  "category": "infrastructure",
+  "severity": 3,
+  "trigger": { "index": "commuteIndex", "op": "lt", "value": 35 },
+  "cooldown_months": 9,
+  "notification": "A cascade of rail signal failures has crippled the central transit spine.",
+  "choices": [
+    {
+      "id": "emergency_repairs",
+      "label": "Fund Emergency Repairs",
+      "description": "Restore service rapidly with emergency contractors.",
+      "budget_cost": 900,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 9.0 },
+        { "target": "publicTrust", "op": "add", "value": 2.0 }
+      ]
+    },
+    {
+      "id": "temporary_shuttles",
+      "label": "Deploy Temporary Shuttles",
+      "description": "Cheaper short-term mitigation while crews work through the backlog.",
+      "budget_cost": 450,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": 4.0 },
+        { "target": "publicTrust", "op": "add", "value": -1.0 }
+      ]
+    },
+    {
+      "id": "defer_response",
+      "label": "Defer Response",
+      "description": "Avoid immediate spending and absorb the service decline.",
+      "budget_cost": 0,
+      "effects": [
+        { "target": "commuteIndex", "op": "add", "value": -5.0 },
+        { "target": "publicTrust", "op": "add", "value": -6.0 },
+        { "target": "taxEfficiency", "op": "multiply", "value": 0.95 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "climate_resilience_bonds",
+  "label": "Climate Resilience Bonds",
+  "description": "Issues dedicated resilience bonds to fund flood mitigation and heat-island retrofits.",
+  "category": "environment",
+  "type": "tax_modifier",
+  "cost_per_month": 410,
+  "min_approval": 28,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 410,
+      "effects": [
+        { "target": "pollutionIndex", "op": "add", "value": -4.0 },
+        { "target": "healthAccessStress", "op": "add", "value": -5.0 },
+        { "target": "debtStress", "op": "add", "value": 4.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 790,
+      "unlock_min_approval": 52,
+      "effects": [
+        { "target": "pollutionIndex", "op": "add", "value": -8.0 },
+        { "target": "healthAccessStress", "op": "add", "value": -9.0 },
+        { "target": "debtStress", "op": "add", "value": 8.0 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "emergency_response_drills",
+  "label": "Emergency Response Drills",
+  "description": "Runs regular citywide emergency drills to improve response coordination and resilience.",
+  "category": "safety",
+  "type": "service_boost",
+  "cost_per_month": 210,
+  "min_approval": 18,
+  "levels": [
+    {
+      "level": 1,
+      "cost_per_month": 210,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": 4.0 },
+        { "target": "safetyCapacityLoad", "op": "add", "value": -4.0 }
+      ]
+    },
+    {
+      "level": 2,
+      "cost_per_month": 420,
+      "unlock_min_approval": 42,
+      "effects": [
+        { "target": "safetyIndex", "op": "add", "value": 7.0 },
+        { "target": "safetyCapacityLoad", "op": "add", "value": -7.0 },
+        { "target": "taxEfficiency", "op": "add", "value": 0.01 }
+      ]
+    }
+  ]
+}
