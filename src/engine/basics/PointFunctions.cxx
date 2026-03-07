@@ -108,13 +108,17 @@ std::vector<Point> PointFunctions::getLine(Point isoCoordinatesStart, Point isoC
 std::vector<Point> PointFunctions::getStraightLine(const Point &isoCoordinatesStart, const Point &isoCoordinatesEnd)
 {
   std::vector<Point> rectangle;
+
+  uint32_t xDist = std::abs(isoCoordinatesStart.x - isoCoordinatesEnd.x);
+  uint32_t yDist = std::abs(isoCoordinatesStart.y - isoCoordinatesEnd.y);
+
+  // Reserve capacity for straight line
+  rectangle.reserve(xDist + yDist + 1);
+
   int directionX = isoCoordinatesStart.x < isoCoordinatesEnd.x ? 1 : -1;
   int directionY = isoCoordinatesStart.y < isoCoordinatesEnd.y ? 1 : -1;
   int staticX, staticY;
   bool reverseDirection = false;
-
-  uint32_t xDist = std::abs(isoCoordinatesStart.x - isoCoordinatesEnd.x);
-  uint32_t yDist = std::abs(isoCoordinatesStart.y - isoCoordinatesEnd.y);
 
   if (xDist == 0 && yDist == 1)
   {
@@ -161,6 +165,11 @@ std::vector<Point> PointFunctions::getArea(const Point &isoCoordinatesStart, con
   std::tie(startRect.x, endRect.x) = std::minmax(isoCoordinatesStart.x, isoCoordinatesEnd.x);
   std::tie(startRect.y, endRect.y) = std::minmax(isoCoordinatesStart.y, isoCoordinatesEnd.y);
 
+  // Reserve capacity based on area size
+  int width = endRect.x - startRect.x + 1;
+  int height = endRect.y - startRect.y + 1;
+  rectangle.reserve(width * height);
+
   for (int x = startRect.x; x <= endRect.x; x++)
   {
     for (int y = startRect.y; y <= endRect.y; y++)
@@ -175,6 +184,14 @@ std::vector<Point> PointFunctions::getArea(const Point &isoCoordinatesStart, con
 std::vector<Point> PointFunctions::getNeighbors(const Point &isoCoordinates, const bool includeCentralNode, int distance)
 {
   std::vector<Point> neighbors;
+  // Reserve capacity to avoid dynamic reallocation. The formula computes the total number
+  // of elements in a square grid of side length (2 * distance + 1), subtracting 1 if the
+  // central node is excluded.
+  int capacity = (2 * distance + 1) * (2 * distance + 1);
+  if (!includeCentralNode) {
+    capacity -= 1;
+  }
+  neighbors.reserve(capacity);
 
   for (int xOffset = -distance; xOffset <= distance; ++xOffset)
   {
