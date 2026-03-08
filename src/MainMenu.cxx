@@ -234,7 +234,7 @@ bool mainMenu()
       float btnY = cardY + cardPad;
       const float btnX = cardX + cardPad;
 
-      auto drawBtn = [&](const char *label, bool destructive = false) -> bool {
+      auto drawBtn = [&](const char *label, const char *tooltip = nullptr, bool destructive = false) -> bool {
         if (destructive)
         {
           ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.28f, 0.06f, 0.06f, 1.f));
@@ -244,12 +244,14 @@ bool mainMenu()
         ui::SetCursorPos(ImVec2(btnX, btnY));
         btnY += btnH + btnGap;
         bool clicked = ui::ButtonCt(label, btnSize);
+        if (tooltip && ui::IsItemHovered())
+          ui::SetTooltip("%s", tooltip);
         if (destructive)
           ImGui::PopStyleColor(3);
         return clicked;
       };
 
-      if (drawBtn("New Game"))
+      if (drawBtn("New Game", "Start a new city"))
       {
 #ifdef USE_AUDIO
         playAudioMajorSelection();
@@ -258,10 +260,10 @@ bool mainMenu()
         SignalMediator::instance().signalNewGame.emit(true);
       }
 
-      if (drawBtn("Load Game"))
+      if (drawBtn("Load Game", "Load a saved city"))
         showLoadDialog = true;
 
-      if (drawBtn("Quit Game", /*destructive=*/true))
+      if (drawBtn("Quit Game", "Exit to desktop", /*destructive=*/true))
       {
         startGame    = false;
         mainMenuLoop = false;
