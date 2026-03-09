@@ -9,3 +9,6 @@
 ## 2025-03-08 - Added tooltips to Main Menu buttons
 **Learning:** Found that modifying the existing ImGui lambda `drawBtn` in `src/MainMenu.cxx` allows for easily displaying helpful context via tooltips using `ui::IsItemHovered()` and `ui::SetTooltip()`. This provides valuable information to the user without cluttering the screen and is consistent with the `PauseMenu` implementation.
 **Action:** When working on ImGui UIs, investigate local lambda functions generating similar UI elements and extend them to add common features like tooltips. Provide descriptive context, particularly for significant actions like creating a new game, loading, or quitting.
+## 2026-03-09 - Adding Tooltips to Governance Metrics
+**Learning:** Adding explanatory tooltips using `ui::IsItemHovered()` and `ui::SetTooltip()` to abstract and highly consequential game mechanics like 'Approval', 'Election Status', and 'Council Checkpoint' makes the UI significantly more intuitive without adding visual clutter.
+**Action:** Always verify if complex or abstract UI states can be clarified with hover tooltips, particularly in simulation games where mechanics aren't immediately obvious.
