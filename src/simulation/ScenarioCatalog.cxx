@@ -130,3 +130,15 @@ bool ScenarioCatalog::applyScenarioById(const std::string &id) const
     return false;
   return applyScenario(*definition);
 }
+
+void ScenarioCatalog::setPendingSelection(const std::string &scenarioId, DifficultyLevel difficulty)
+{
+  m_pendingScenarioId = scenarioId;
+  m_pendingDifficulty = difficulty;
+}
+
+void ScenarioCatalog::clearPending()
+{
+  m_pendingScenarioId.clear();
+  m_pendingDifficulty = DifficultyLevel::Standard;
+}

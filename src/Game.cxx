@@ -26,6 +26,7 @@
 #include <EconomyDepthModel.hxx>
 #include <ServiceStrainModel.hxx>
 #include <ScenarioCatalog.hxx>
+#include <DifficultySettings.hxx>
 #include <SimulationContext.hxx>
 #include "services/FeatureFlags.hxx"
 #include "services/FrameMetrics.hxx"
@@ -338,17 +339,47 @@ void Game::loadGame(const std::string &fileName)
 
 void Game::applyConfiguredScenario()
 {
-  const std::string &scenarioId = FeatureFlags::instance().defaultScenarioId();
+  // Priority: scenario + difficulty selected by the player in the new-game screen.
+  std::string scenarioId = ScenarioCatalog::instance().pendingScenarioId();
+  DifficultyLevel difficulty = ScenarioCatalog::instance().pendingDifficulty();
+  ScenarioCatalog::instance().clearPending();
+
+  // Fall back to the FeatureFlags default when no player selection was made.
+  if (scenarioId.empty())
+  {
+    scenarioId = FeatureFlags::instance().defaultScenarioId();
+    difficulty = DifficultyLevel::Standard;
+  }
+
+  // Re-configure GovernanceSystem with the chosen difficulty settings.
+  // (The system was already initialised in Game::run() with FeatureFlags values;
+  // we override here so each new game respects the player's selection.)
+  // Note: councilCheckpointEnabled uses AND – FeatureFlags can globally disable
+  // checkpoints (e.g. for testing), but difficulty can also disable them (Sandbox).
+  // Both must be true for checkpoints to fire.
+  const DifficultyConfig cfg = difficultyConfig(difficulty);
+  GovernanceSystem::instance().configure(
+      cfg.checkpointIntervalMonths,
+      cfg.constraintThreshold,
+      cfg.eventThreshold,
+      cfg.softFailThreshold,
+      cfg.policyLockMonths,
+      FeatureFlags::instance().eventSystem(),
+      cfg.councilCheckpointEnabled && FeatureFlags::instance().councilCheckpoint());
+  GovernanceSystem::instance().reset();
+
+  LOG(LOG_INFO) << "New game started at difficulty '" << difficultyLabel(difficulty) << "'.";
+
   if (scenarioId.empty())
     return;
 
   if (!ScenarioCatalog::instance().applyScenarioById(scenarioId))
   {
-    LOG(LOG_WARNING) << "Configured default scenario '" << scenarioId << "' was not applied.";
+    LOG(LOG_WARNING) << "Configured scenario '" << scenarioId << "' was not applied.";
     return;
   }
 
-  LOG(LOG_INFO) << "Applied default scenario '" << scenarioId << "' to new game state.";
+  LOG(LOG_INFO) << "Applied scenario '" << scenarioId << "' to new game state.";
 }
 
 } // namespace Cytopia

@@ -45,6 +45,7 @@ and pollution. Residents react. Elections loom. Build a city people actually wan
 - Notification Overlay (toast-style event alerts, 8-second auto-dismiss)
 - Event Log Panel (scrollable full notification history)
 - Economy Panel (budget + deep economy/service indicators)
+- New Game Screen (scenario selection + Sandbox / Standard / Challenge difficulty)
 
 ---
 
@@ -56,7 +57,7 @@ or [`docs/ROADMAP.md`](docs/ROADMAP.md) for the technical implementation phases.
 | Milestone | Version | Status | Theme |
 |-----------|---------|--------|-------|
 | Proof of Concept | v0.4 | ✅ Playable | Policy sandbox — indices, policies, events, council |
-| The Living City | v0.5 | 🔄 In progress | Economy multipliers wired to zone growth, scenarios |
+| The Living City | v0.5 | ✅ Complete | Economy multipliers, scenarios, difficulty |
 | Politics Matters | v0.6 | 🔲 Planned | Stakeholder reactions, policy unlock tree, win/loss |
 | Narrative & Factions | v0.7 | 🔲 Planned | Advisor character, factions, campaign chain |
 | Original IP Launch | v1.0 | 🔲 Planned | Original art, audio, lore, tutorial, mod support |
@@ -118,8 +119,9 @@ ctest --output-on-failure
 ./OpenAgora_Tests "[simulation]"
 ```
 
-62 simulation-layer unit tests cover city indices, affordability, policy/governance depth,
-budget round-tripping, scenario/content loading, and deep economy/service models.
+80 simulation-layer unit tests cover city indices, affordability, policy/governance depth,
+budget round-tripping, scenario/content loading, deep economy/service models, zone-growth
+formulas, and difficulty-level presets.
 
 ---
 

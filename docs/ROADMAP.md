@@ -13,8 +13,9 @@ For the **player-facing feature plan** see [`GAMEPLAY_ROADMAP.md`](GAMEPLAY_ROAD
 **Engine:** SDL2 + Dear ImGui, C++17, CMake/Conan, libnoise terrain gen  
 **Simulation depth today:** Zone management (RCI), power grids, tile placement, terrain generation,
 city-wide indices, affordability model, policy engine, governance loop with council checkpoints,
-event system, budget system, and affordability heatmap overlay  
-**What's still in progress:** Economy multipliers fully wired to zone growth (Phase 2 completion), Phase 3 IP conversion
+event system, budget system, economy depth model, service strain model, zone-type growth multipliers,
+affordability heatmap overlay, scenario selection at game start, and three-level difficulty system  
+**What's still in progress:** Phase 3 IP conversion (original art, audio, lore)
 
 The data-model hooks are already partially there – `TileData` already carries
 `inhabitants`, `happiness`, `educationLevel`, `pollutionLevel`, `crimeLevel`,
@@ -360,6 +361,51 @@ All eight economy/service metrics are visible with contextual colour coding and 
 
 ---
 
+## Phase 2.6 – Scenario Selection + Difficulty ✅ Complete
+
+### 2.6.1 Scenario Selection at Game Start ✅
+
+**Files:** `src/game/ui/NewGameScreen.hxx/.cxx`
+
+A modal screen shown after "New Game" is clicked, before the city loads:
+
+- Lists all five bundled scenarios with label, description, starting approval, balance, and recommended policies.
+- Player selects a scenario card; the selected scenario is applied on "Start Game".
+- Screen follows the same result-enum pattern as `LoadMenu` for clean integration with `MainMenu.cxx`.
+
+**Integration:** `src/MainMenu.cxx` – "New Game" now shows `NewGameScreen` instead of immediately starting ✅
+
+`ScenarioCatalog` stores the pending selection (scenario ID + difficulty) that `Game::newGame()` consumes.
+
+### 2.6.2 Difficulty Settings ✅
+
+**File:** `src/simulation/DifficultySettings.hxx`
+
+Three difficulty presets, selectable in `NewGameScreen` alongside the scenario:
+
+| Difficulty | Council Checkpoints | Soft-Fail Threshold | Policy Lock | Checkpoint Interval |
+|------------|---------------------|---------------------|-------------|---------------------|
+| **Sandbox** | Disabled | 0 (never) | 0 months | — |
+| **Standard** | Enabled | 15 | 3 months | Every 6 months |
+| **Challenge** | Enabled | 25 | 4 months | Every 4 months |
+
+`DifficultyConfig` is a plain struct; `difficultyConfig(DifficultyLevel)` returns the preset values.
+
+`Game::applyConfiguredScenario()` reads the pending difficulty and re-configures `GovernanceSystem` so
+each new game honours the player's selection.
+
+**Tests:** `tests/simulation/DifficultySettings.cxx` – 8 unit tests ✅
+
+### Phase 2.6 Milestone ✅ — v0.5 "The Living City" Complete
+
+Player can now:
+1. Choose one of five curated scenarios at game start, each with distinct starting conditions.
+2. Select Sandbox / Standard / Challenge difficulty to tailor the governance pressure.
+3. Watch their economic policies visibly change how the city grows (residentially, commercially, industrially).
+4. See all eight economy-depth and service-strain metrics with colour-coded status.
+
+---
+
 ## Phase 3 – Original IP Conversion (Ongoing / D-track)
 
 This phase runs in parallel with Phase 2 once a stable base exists. It is mostly
@@ -409,7 +455,8 @@ src/
 │   ├── ServiceStrainModel.hxx/.cxx    ✅
 │   ├── SimulationContext.hxx/.cxx     ✅
 │   ├── ZoneGrowthFormulas.hxx         ✅ (pure zone-type multiplier logic, testable)
-│   └── ScenarioCatalog.hxx/.cxx       ✅
+│   ├── ScenarioCatalog.hxx/.cxx       ✅
+│   └── DifficultySettings.hxx         ✅ (header-only; Sandbox/Standard/Challenge presets)
 ├── game/           ← existing zone/power managers + new governance
 │   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick + churn + zone-type growth wiring)
 │   └── ui/         ← ImGui panels
@@ -418,7 +465,8 @@ src/
 │       ├── PolicyPanel.hxx/.cxx       ✅ (leveled controls + availability)
 │       ├── NotificationOverlay.hxx/.cxx ✅
 │       ├── EventLogPanel.hxx/.cxx     ✅
-│       └── EconomyPanel.hxx/.cxx      ✅
+│       ├── EconomyPanel.hxx/.cxx      ✅
+│       └── NewGameScreen.hxx/.cxx     ✅ (scenario + difficulty selection at game start)
 ├── engine/         ← map, rendering, input (existing)
 │   └── render/
 │       └── AffordabilityOverlay.hxx/.cxx ✅ (heatmap overlay)

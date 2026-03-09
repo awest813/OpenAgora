@@ -16,6 +16,7 @@
 #include "imgui_impl_sdlrenderer.h"
 
 #include "game/ui/LoadMenu.hxx"
+#include "game/ui/NewGameScreen.hxx"
 #include "game/ui/UITheme.hxx"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -47,7 +48,8 @@ bool mainMenu()
 
   bool mainMenuLoop = true;
   bool startGame    = true;
-  bool showLoadDialog = false;
+  bool showLoadDialog    = false;
+  bool showNewGameScreen = false;
 
   UIManager::instance().init();
 
@@ -141,6 +143,7 @@ bool mainMenu()
 
   // ── Main loop ─────────────────────────────────────────────────────────────
   LoadMenu loadMenu;
+  NewGameScreen newGameScreen;
   const auto &buttonFont = UIManager::instance().getLayouts()["MainMenuButtons"].font;
 
   // Animated pulse time for button highlight
@@ -176,6 +179,27 @@ bool mainMenu()
         playAudioMajorSelection();
 #endif
         SignalMediator::instance().signalLoadGame.emit(loadMenu.filename());
+        mainMenuLoop = false;
+        break;
+
+      default:
+        break;
+      }
+    }
+    else if (showNewGameScreen)
+    {
+      newGameScreen.draw();
+      switch (newGameScreen.result())
+      {
+      case NewGameScreen::e_close:
+        showNewGameScreen = false;
+        break;
+
+      case NewGameScreen::e_start_game:
+#ifdef USE_AUDIO
+        playAudioMajorSelection();
+#endif
+        SignalMediator::instance().signalNewGame.emit(true);
         mainMenuLoop = false;
         break;
 
@@ -253,11 +277,7 @@ bool mainMenu()
 
       if (drawBtn("New Game", "Start a new city"))
       {
-#ifdef USE_AUDIO
-        playAudioMajorSelection();
-#endif
-        mainMenuLoop = false;
-        SignalMediator::instance().signalNewGame.emit(true);
+        showNewGameScreen = true;
       }
 
       if (drawBtn("Load Game", "Load a saved city"))
