@@ -1,5 +1,7 @@
 #include "PointFunctions.hxx"
 #include <cassert>
+#include <cmath>
+#include <algorithm>
 
 // forward declarations
 static std::vector<Point> getLine;
@@ -14,6 +16,12 @@ std::vector<Point> PointFunctions::getLine(Point isoCoordinatesStart, Point isoC
   int x1 = isoCoordinatesEnd.x;
   int y0 = isoCoordinatesStart.y;
   int y1 = isoCoordinatesEnd.y;
+
+  // ⚡ Bolt: Pre-calculate maximum possible points to reserve capacity, avoiding dynamic reallocations.
+  // The max possible points is max_dist + min_dist + 1 to account for all steps including diagonals.
+  int maxDist = std::max(std::abs(x1 - x0), std::abs(y1 - y0));
+  int minDist = std::min(std::abs(x1 - x0), std::abs(y1 - y0));
+  line.reserve(maxDist + minDist + 1);
 
   Point p;
   p.x = x0;
