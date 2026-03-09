@@ -266,6 +266,8 @@ void MapFunctions::updateAllNodes()
 std::vector<NeighborNode> MapFunctions::getNeighborNodes(const Point &isoCoordinates, const bool includeCentralNode)
 {
   std::vector<NeighborNode> neighbors;
+  // ⚡ Bolt: Reserve capacity based on maximum possible neighbors (distance=1 means 9 nodes max)
+  neighbors.reserve(includeCentralNode ? 9 : 8);
 
   for (auto it : PointFunctions::getNeighbors(isoCoordinates, includeCentralNode))
   {
@@ -350,6 +352,9 @@ std::vector<uint8_t> MapFunctions::calculateAutotileBitmask(Point coordinate)
 {
   std::vector<uint8_t> tileOrientationBitmask(LAYERS_COUNT, 0);
 
+  // ⚡ Bolt: Cache neighbor nodes once instead of querying multiple times per layer
+  const std::vector<NeighborNode> neighbors = getNeighborNodes(coordinate, false);
+
   for (auto currentLayer : allLayersOrdered)
   {
     auto pCurrentTileData = getMapNode(coordinate).getMapNodeDataForLayer(currentLayer).tileData;
@@ -358,7 +363,7 @@ std::vector<uint8_t> MapFunctions::calculateAutotileBitmask(Point coordinate)
     {
       if (pCurrentTileData->tileType == +TileType::TERRAIN)
       {
-        for (const auto &neighbor : getNeighborNodes(coordinate, false))
+        for (const auto &neighbor : neighbors)
         {
           const auto pTileData = neighbor.pNode->getMapNodeDataForLayer(Layer::WATER).tileData;
 
@@ -373,7 +378,7 @@ std::vector<uint8_t> MapFunctions::calculateAutotileBitmask(Point coordinate)
       const std::string &nodeTileId = getMapNode(coordinate).getMapNodeDataForLayer(currentLayer).tileID;
       if (TileManager::instance().isTileIDAutoTile(nodeTileId))
       {
-        for (const auto &neighbor : getNeighborNodes(coordinate, false))
+        for (const auto &neighbor : neighbors)
         {
           const MapNodeData &nodeData = neighbor.pNode->getMapNodeDataForLayer(currentLayer);
 
