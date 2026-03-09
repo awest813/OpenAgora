@@ -31,6 +31,8 @@ set(SOURCE_FILES
         simulation/EconomyDepthModel.{hxx,cxx}
         simulation/ServiceStrainModel.{hxx,cxx}
         simulation/ScenarioCatalog.{hxx,cxx}
+        simulation/DifficultySettings.hxx
+        simulation/ZoneGrowthFormulas.hxx
         engine/MessageQueue.hxx
         engine/MessageQueue.inl.hxx
         engine/basics/Camera.{hxx,cxx}
@@ -66,6 +68,7 @@ set(SOURCE_FILES
         game/ui/SettingsMenu.{hxx,cxx}
         game/ui/PauseMenu.{hxx,cxx}
         game/ui/LoadMenu.{hxx,cxx}
+        game/ui/NewGameScreen.{hxx,cxx}
         game/ui/BuildMenu.{hxx,cxx}
         game/ui/GameTimeMenu.{hxx,cxx}
         game/ui/CityIndicesPanel.{hxx,cxx}

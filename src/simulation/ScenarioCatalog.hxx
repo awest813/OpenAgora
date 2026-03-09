@@ -1,6 +1,7 @@
 #ifndef SCENARIO_CATALOG_HXX_
 #define SCENARIO_CATALOG_HXX_
 
+#include "DifficultySettings.hxx"
 #include "Singleton.hxx"
 
 #include <string>
@@ -30,10 +31,18 @@ public:
   bool applyScenario(const ScenarioDefinition &definition) const;
   bool applyScenarioById(const std::string &id) const;
 
+  /// Store the player's new-game selection (read by Game::newGame).
+  void setPendingSelection(const std::string &scenarioId, DifficultyLevel difficulty);
+  void clearPending();
+  const std::string &pendingScenarioId() const { return m_pendingScenarioId; }
+  DifficultyLevel pendingDifficulty() const { return m_pendingDifficulty; }
+
 private:
   ScenarioCatalog() = default;
 
   std::vector<ScenarioDefinition> m_definitions;
+  std::string m_pendingScenarioId;
+  DifficultyLevel m_pendingDifficulty = DifficultyLevel::Standard;
 };
 
 #endif // SCENARIO_CATALOG_HXX_

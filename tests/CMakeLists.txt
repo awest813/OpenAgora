@@ -41,6 +41,7 @@ LIST(APPEND TEST_SOURCES
         simulation/ScenarioCatalog.cxx
         simulation/ContentValidation.cxx
         simulation/ZoneGrowthFormulas.cxx
+        simulation/DifficultySettings.cxx
         services/GameClock.cxx
         util/Meta.cxx
         util/MessageQueue.cxx
