@@ -57,6 +57,8 @@ void GovernancePanel::draw() const
     char overlay[20];
     snprintf(overlay, sizeof(overlay), "%.0f / 100", approval);
     ui::ProgressBar(approval / 100.f, ImVec2(-1.f, 14.f), overlay);
+    if (ui::IsItemHovered())
+      ui::SetTooltip("Overall citizen satisfaction.\nDetermines policy options at next election.");
     ui::PopStyleColor(2);
   }
 
@@ -76,12 +78,23 @@ void GovernancePanel::draw() const
 
     ui::PushStyleColor(ImGuiCol_Text, statusClr);
     ui::TextUnformatted(statusTxt);
+    if (ui::IsItemHovered())
+    {
+      if (lost)
+        ui::SetTooltip("Election lost. Sandbox mode remains active.");
+      else if (constrained)
+        ui::SetTooltip("Low approval. Policy options are severely limited.");
+      else
+        ui::SetTooltip("High approval. All policy options are available.");
+    }
     ui::PopStyleColor();
 
     if (months >= 0)
     {
       ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
       ui::Text("Council checkpoint in: %d month%s", months, months == 1 ? "" : "s");
+      if (ui::IsItemHovered())
+        ui::SetTooltip("Months until the next council election where\napproval rating determines your continued mandate.");
       ui::PopStyleColor();
     }
   }
