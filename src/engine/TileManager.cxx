@@ -54,6 +54,9 @@ std::vector<Point> TileManager::getTargetCoordsOfTileID(const Point &targetCoord
     return occupiedCoords;
   }
 
+  // ⚡ Bolt: Reserve capacity for occupiedCoords based on known dimensions
+  occupiedCoords.reserve(tileData->RequiredTiles.width * tileData->RequiredTiles.height);
+
   for (int i = 0; i < tileData->RequiredTiles.width; i++)
   {
     for (int j = 0; j < tileData->RequiredTiles.height; j++)
