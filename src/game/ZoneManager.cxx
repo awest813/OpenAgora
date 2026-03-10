@@ -239,7 +239,8 @@ void ZoneManager::updatePower(const std::vector<PowerGrid> &powerGrid)
     {
       if (bool isGridConnected =
               area.end() !=
-              std::find_if(area.begin(), area.end(), [grid](const ZoneNode &node) { return grid.isNeighbor(node.coordinate); });
+              // ⚡ Bolt: Capturing `grid` by reference instead of value avoids a deep copy of the PowerGrid and its internal vector.
+              std::find_if(area.begin(), area.end(), [&grid](const ZoneNode &node) { return grid.isNeighbor(node.coordinate); });
           !isGridConnected)
         continue;
       if (grid.getPowerLevel() > 0)
