@@ -1,14 +1,3 @@
-## 2026-03-05 - Adding Tooltips to Underexplained Metrics
-**Learning:** The City Indices panel showed labels like 'Affordability' and 'Safety' which are complex aggregate metrics. The icons in the underlying data structure weren't even being rendered. Adding hover tooltips helps explain complex game mechanics to users without cluttering the UI.
-**Action:** Look for other areas where complex data structures have unused fields or where game mechanics are summarized into a single word, and add tooltips using `ui::IsItemHovered()` to provide context.
-
-## 2025-01-28 - Adding Tooltips for Destructive Actions
-**Learning:** Destructive actions without context (e.g., "Quit Game" or "New Game") can result in accidental data loss and frustrate users. I found that modifying existing ImGui UI lambda abstractions (`centeredButton` in `PauseMenu`) to accept tooltips allows us to quickly inject contextual warnings (e.g., "Abandon current city and start fresh") exactly where they're needed.
-**Action:** Always verify if a primary action might result in lost user context or data. If so, immediately add an explanation on hover via `ui::IsItemHovered()` and `ui::SetTooltip()`.
-
-## 2025-03-08 - Added tooltips to Main Menu buttons
-**Learning:** Found that modifying the existing ImGui lambda `drawBtn` in `src/MainMenu.cxx` allows for easily displaying helpful context via tooltips using `ui::IsItemHovered()` and `ui::SetTooltip()`. This provides valuable information to the user without cluttering the screen and is consistent with the `PauseMenu` implementation.
-**Action:** When working on ImGui UIs, investigate local lambda functions generating similar UI elements and extend them to add common features like tooltips. Provide descriptive context, particularly for significant actions like creating a new game, loading, or quitting.
-## 2026-03-09 - Adding Tooltips to Governance Metrics
-**Learning:** Adding explanatory tooltips using `ui::IsItemHovered()` and `ui::SetTooltip()` to abstract and highly consequential game mechanics like 'Approval', 'Election Status', and 'Council Checkpoint' makes the UI significantly more intuitive without adding visual clutter.
-**Action:** Always verify if complex or abstract UI states can be clarified with hover tooltips, particularly in simulation games where mechanics aren't immediately obvious.
+## 2024-03-10 - Adding Contextual Tooltips in Dear ImGui
+**Learning:** In native C++ desktop apps using Dear ImGui, standard accessibility principles still apply (e.g., explaining icon-only buttons or destructive actions). We can easily accomplish this by appending `if (ui::IsItemHovered()) ui::SetTooltip("...");` immediately after drawing the UI element.
+**Action:** Always check for missing tooltips on icon-only buttons (`ImageButton`) and append clear warnings to destructive actions (like "Quit" or "New Game") to prevent accidental data loss.

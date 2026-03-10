@@ -305,10 +305,14 @@ bool mainMenu()
       ui::SetCursorPos(ImVec2((float)xOff, iconY));
       if (ui::ImageButton(discordTex, ImVec2(iconSz, iconSz)))
         OSystem::openDir("https://discord.gg/MG3tgYV6ce");
+      if (ui::IsItemHovered())
+        ui::SetTooltip("Join our Discord");
 
       ui::SetCursorPos(ImVec2((float)(xOff * 3 + iconSz), iconY));
       if (ui::ImageButton(githubTex, ImVec2(iconSz, iconSz)))
         OSystem::openDir("https://github.com/CytopiaTeam/Cytopia/issues/new");
+      if (ui::IsItemHovered())
+        ui::SetTooltip("Report an issue on GitHub");
 
       ImGui::PopStyleColor(3);
       ImGui::PopStyleVar(1);
