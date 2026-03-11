@@ -69,7 +69,7 @@ void PauseMenu::draw() const
     uiManager.openMenu<SettingsMenu>();
   }
 
-  if (centeredButton("New Game", "Abandon current city and start fresh"))
+  if (centeredButton("New Game", "Abandon current city and start fresh (unsaved progress will be lost)"))
     SignalMediator::instance().signalNewGame.emit(true);
 
   if (centeredButton("Save Game", "Save current city progress"))
@@ -86,7 +86,7 @@ void PauseMenu::draw() const
   ui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.10f, 0.10f, 1.f));
   ui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.75f, 0.15f, 0.15f, 1.f));
   ui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.45f, 0.08f, 0.08f, 1.f));
-  if (centeredButton("Quit Game", "Exit to desktop"))
+  if (centeredButton("Quit Game", "Exit to desktop (unsaved progress will be lost)"))
     SignalMediator::instance().signalQuitGame.emit();
   ui::PopStyleColor(3);
 
