@@ -94,6 +94,8 @@ void CityIndicesPanel::draw() const
     char overlay[8];
     snprintf(overlay, sizeof(overlay), "%.0f", row.cur);
     ui::ProgressBar(row.cur / 100.f, ImVec2(-1.f, barH), overlay);
+    if (ui::IsItemHovered())
+      ui::SetTooltip("%s", row.tooltip);
     ui::PopStyleColor(2);
   }
 
