@@ -7,6 +7,8 @@
   "cost_per_month": 350,
   "min_approval": 25,
   "exclusive_with": ["upzoning_incentives"],
+  "stakeholder_reaction_on":  "Tenants' Coalition: 'Rent stabilisation will protect long-term residents from displacement.' Landlord lobby: 'These caps will freeze investment and accelerate building decay.'",
+  "stakeholder_reaction_off": "Business Alliance: 'Lifting rent controls will restore investor confidence in the housing sector.'",
   "levels": [
     {
       "level": 1,

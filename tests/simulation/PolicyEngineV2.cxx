@@ -147,3 +147,25 @@ TEST_CASE("PolicyEngine can apply effects to simulation context fields", "[simul
   CHECK(ctx.growthRateModifier == Approx(1.1f));
 }
 
+TEST_CASE("PolicyDefinition stores stakeholderReaction fields", "[simulation][policy][policy_v2]")
+{
+  PolicyEngine &engine = PolicyEngine::instance();
+  engine.clearPolicies();
+
+  PolicyDefinition def;
+  def.id = "reaction_test";
+  def.label = "Reaction Test";
+  def.description = "test";
+  def.category = "housing";
+  def.type = "budget_sink";
+  def.stakeholderReactionOn = "Tenants: Great news!";
+  def.stakeholderReactionOff = "Landlords: Finally!";
+  def.levels = {PolicyLevelDefinition{1, 100, 0.f, {}}};
+  engine.addDefinition(def);
+
+  REQUIRE(engine.definitions().size() == 1);
+  const PolicyDefinition &loaded = engine.definitions().front();
+  CHECK(loaded.stakeholderReactionOn == "Tenants: Great news!");
+  CHECK(loaded.stakeholderReactionOff == "Landlords: Finally!");
+}
+

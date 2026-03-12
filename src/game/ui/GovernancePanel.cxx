@@ -18,7 +18,9 @@ void GovernancePanel::draw() const
   GovernanceSystem &governance = GovernanceSystem::instance();
 
   constexpr float panelWidth  = 260.f;
-  constexpr float panelHeight = 250.f;
+  // 270 px: extra 20 px over the original 250 accommodates the pledge sidebar row,
+  // win banner, and consecutive-checkpoint streak display.
+  constexpr float panelHeight = 270.f;
   // sits just below the CityIndicesPanel (which ends at ~218)
   const ImVec2 panelPos{6.f, 224.f};
 
@@ -42,6 +44,17 @@ void GovernancePanel::draw() const
   }
 
   UITheme::sectionHeader("  Governance");
+
+  // ── Election win banner ────────────────────────────────────────────────────
+  if (governance.wonElection())
+  {
+    ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_GREEN);
+    ui::TextUnformatted("  ★ Term Secured – three-term majority");
+    if (ui::IsItemHovered())
+      ui::SetTooltip("You have won three consecutive council elections.\nYour mandate is strong.");
+    ui::PopStyleColor();
+    ui::Spacing();
+  }
 
   // ── Approval bar ──────────────────────────────────────────────────────────
   {
@@ -95,6 +108,25 @@ void GovernancePanel::draw() const
       ui::Text("Council checkpoint in: %d month%s", months, months == 1 ? "" : "s");
       if (ui::IsItemHovered())
         ui::SetTooltip("Months until the next council election where\napproval rating determines your continued mandate.");
+      ui::PopStyleColor();
+    }
+
+    // ── Consecutive checkpoint streak ─────────────────────────────────────
+    const int streak = governance.consecutiveSuccessfulCheckpoints();
+    if (streak > 0)
+    {
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_ACCENT);
+      ui::Text("Consecutive wins: %d / %d", streak, 3);
+      if (ui::IsItemHovered())
+        ui::SetTooltip("Win %d consecutive council checkpoints (approval >= soft-fail threshold)\nto secure your electoral mandate.", 3);
+      ui::PopStyleColor();
+    }
+
+    // ── Active pledge ──────────────────────────────────────────────────────
+    if (governance.hasPledge())
+    {
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_ORANGE);
+      ui::TextWrapped("Pledge: %s", governance.activePledge().description.c_str());
       ui::PopStyleColor();
     }
   }
@@ -225,6 +257,46 @@ void GovernancePanel::draw() const
     }
     UITheme::popButtonStyle();
 
+    // ── Next-term pledge selection ──────────────────────────────────────
+    ui::Separator();
+    ImGui::PushStyleColor(ImGuiCol_Text, UITheme::COL_HEADER_TEXT);
+    ui::TextUnformatted("Term Pledge (optional)");
+    ImGui::PopStyleColor();
+    ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_TEXT_SECONDARY);
+    ui::TextWrapped("Commit to one measurable goal. Keeping it earns approval; breaking it costs trust.");
+    ui::PopStyleColor();
+
+    const auto pledges = governance.availablePledges();
+    const std::string currentPledgeId = governance.hasPledge() ? governance.activePledge().id : "";
+
+    UITheme::pushButtonStyle();
+    // "No pledge" option
+    {
+      const bool noneSelected = currentPledgeId.empty();
+      if (noneSelected)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.22f, 0.30f, 0.42f, 1.f));
+      if (ui::Button("No pledge", ImVec2(-1.f, 0.f)))
+        governance.clearPledge();
+      if (noneSelected)
+        ImGui::PopStyleColor();
+    }
+    for (const auto &pledge : pledges)
+    {
+      const bool isActive = (currentPledgeId == pledge.id);
+      if (isActive)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.22f, 0.30f, 0.42f, 1.f));
+      if (ui::Button(pledge.description.c_str(), ImVec2(-1.f, 0.f)))
+        governance.setPledge(pledge.id);
+      if (ui::IsItemHovered())
+      {
+        ui::SetTooltip("+%.0f approval if kept,  -%.0f if broken at next checkpoint.",
+                       pledge.bonusApproval, pledge.penaltyApproval);
+      }
+      if (isActive)
+        ImGui::PopStyleColor();
+    }
+    UITheme::popButtonStyle();
+
     ui::Separator();
 
     // Result banner
@@ -232,6 +304,12 @@ void GovernancePanel::draw() const
     {
       ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_RED);
       ui::TextUnformatted("Election lost. Sandbox mode remains active.");
+      ui::PopStyleColor();
+    }
+    else if (governance.wonElection())
+    {
+      ui::PushStyleColor(ImGuiCol_Text, UITheme::COL_GREEN);
+      ui::TextUnformatted("★ Electoral victory secured — three-term mandate!");
       ui::PopStyleColor();
     }
     else if (governance.policyConstrained())

@@ -65,6 +65,18 @@ struct GovernancePolicyOption
   bool selected = false;
 };
 
+/// A pledge the mayor makes at a council checkpoint.
+struct PolicyPledge
+{
+  std::string id;
+  std::string description;   ///< Human-readable promise shown in UI
+  std::string targetIndex;   ///< "affordability" | "safety" | "jobs" | "commute" | "pollution"
+  std::string op;            ///< "above" | "below"
+  float threshold = 0.f;
+  float bonusApproval  = 5.f;  ///< Approval awarded when pledge is kept at next checkpoint
+  float penaltyApproval = 8.f; ///< Approval lost when pledge is broken at next checkpoint
+};
+
 struct GovernancePersistedState
 {
   float approval = 50.f;
@@ -76,6 +88,10 @@ struct GovernancePersistedState
   bool checkpointPending = false;
   float taxEfficiencyMultiplier = 1.f;
   float incomeModifier = 1.f;
+  int consecutiveSuccessfulCheckpoints = 0;
+  bool wonElection = false;
+  bool hasPledge = false;
+  PolicyPledge activePledge;
 };
 
 /**
@@ -101,9 +117,11 @@ public:
   float approval() const { return m_approval; }
   bool policyConstrained() const { return m_policyConstrained; }
   bool lostElection() const { return m_lostElection; }
+  bool wonElection() const { return m_wonElection; }
   bool checkpointPending() const { return m_checkpointPending; }
   float taxEfficiencyMultiplier() const { return m_taxEfficiencyMultiplier; }
   float incomeModifier() const { return m_incomeModifier; }
+  int consecutiveSuccessfulCheckpoints() const { return m_consecutiveSuccessfulCheckpoints; }
   bool hasPendingEventChoice() const { return m_hasPendingEventChoice; }
   const GovernanceEventDefinition *pendingEventChoice() const;
   bool choosePendingEventOption(const std::string &optionId);
@@ -121,9 +139,21 @@ public:
   bool setPolicySelection(const std::string &policyId, bool selected);
   void acknowledgeCheckpoint();
 
+  // ── Pledge API ────────────────────────────────────────────────────────────
+  /// Returns up to 4 pledge choices appropriate for the current city state.
+  std::vector<PolicyPledge> availablePledges() const;
+  /// Commit to a pledge; returns false if the pledge id is not in availablePledges().
+  bool setPledge(const std::string &pledgeId);
+  /// Clear any active pledge (e.g. when election is lost).
+  void clearPledge();
+  bool hasPledge() const { return m_hasPledge; }
+  const PolicyPledge &activePledge() const { return m_activePledge; }
+
   // Test/content helpers
   void clearEvents();
   void addEventDefinition(const GovernanceEventDefinition &definition);
+  /// Push a stakeholder reaction notification (called by PolicyPanel on policy toggle).
+  void pushStakeholderReaction(const std::string &reaction, const std::string &category = "policy");
 
 private:
   GovernanceSystem() = default;
@@ -142,6 +172,7 @@ private:
   bool applyEffectToIndices(const GovernanceEffect &effect, CityIndicesData &indices);
   bool applyEffectToApproval(const GovernanceEffect &effect, float &approvalValue);
   bool applyEffectToGovernanceState(const GovernanceEffect &effect);
+  bool evaluatePledge(const PolicyPledge &pledge, const CityIndicesData &indices, float currentApproval) const;
 
   void updatePolicyAvailability();
   int selectedPolicyCount() const;
@@ -163,12 +194,18 @@ private:
   int m_policyLockMonthsRemaining = 0;
   bool m_policyConstrained = false;
   bool m_lostElection = false;
+  bool m_wonElection = false;
   bool m_checkpointPending = false;
   float m_taxEfficiencyMultiplier = 1.f;
   float m_incomeModifier = 1.f;
   bool m_hasPendingEventChoice = false;
   GovernanceEventDefinition m_pendingEventChoice;
   float m_budgetAdjustment = 0.f;
+
+  int m_consecutiveSuccessfulCheckpoints = 0;
+  static constexpr int WIN_CONSECUTIVE_CHECKPOINTS = 3;
+  bool m_hasPledge = false;
+  PolicyPledge m_activePledge;
 
   std::vector<GovernanceEventDefinition> m_events;
   std::vector<GovernancePolicyOption> m_policyOptions;

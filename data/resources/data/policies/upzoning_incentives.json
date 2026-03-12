@@ -7,6 +7,8 @@
   "cost_per_month": 200,
   "min_approval": 30,
   "exclusive_with": ["rent_control"],
+  "stakeholder_reaction_on":  "Business Alliance: 'More density means more customers, more workers, and a stronger tax base.' Tenants' Coalition: 'Upzoning without protections risks pricing out the residents who already live here.'",
+  "stakeholder_reaction_off": "Tenants' Coalition: 'Pausing upzoning incentives slows displacement pressure. We appreciate the balance.'",
   "levels": [
     {
       "level": 1,

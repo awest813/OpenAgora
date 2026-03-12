@@ -6,6 +6,8 @@
   "type": "tax_modifier",
   "cost_per_month": 120,
   "min_approval": 35,
+  "stakeholder_reaction_on":  "Transit Riders: 'Fewer cars on the road means buses actually run on time now.' Drivers' Association: 'This is a tax on anyone who can't afford to live near the metro.'",
+  "stakeholder_reaction_off": "Drivers' Association: 'At last — the city is treating drivers like citizens again.'",
   "levels": [
     {
       "level": 1,

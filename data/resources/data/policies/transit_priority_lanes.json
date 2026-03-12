@@ -6,6 +6,8 @@
   "type": "service_boost",
   "cost_per_month": 450,
   "min_approval": 30,
+  "stakeholder_reaction_on":  "Transit Riders: 'Dedicated lanes mean predictable journeys. Workers with long commutes will notice this immediately.'",
+  "stakeholder_reaction_off": "Transit Riders: 'Removing priority lanes will push commute times back up and drive people to private cars.'",
   "levels": [
     {
       "level": 1,
