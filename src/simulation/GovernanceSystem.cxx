@@ -204,12 +204,16 @@ void GovernanceSystem::reset()
   m_policyLockMonthsRemaining = 0;
   m_policyConstrained = false;
   m_lostElection = false;
+  m_wonElection = false;
   m_checkpointPending = false;
   m_taxEfficiencyMultiplier = 1.f;
   m_incomeModifier = 1.f;
   m_hasPendingEventChoice = false;
   m_pendingEventChoice = GovernanceEventDefinition{};
   m_budgetAdjustment = 0.f;
+  m_consecutiveSuccessfulCheckpoints = 0;
+  m_hasPledge = false;
+  m_activePledge = PolicyPledge{};
   m_notifications.clear();
 
   for (auto &eventDef : m_events)
@@ -524,6 +528,28 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
         policy.selected = false;
       }
 
+      // ── Evaluate pledge from previous term ──────────────────────────────
+      if (m_hasPledge)
+      {
+        const bool kept = evaluatePledge(m_activePledge, adjustedIndices, approvalValue);
+        if (kept)
+        {
+          approvalValue = clamp100(approvalValue + m_activePledge.bonusApproval);
+          pushNotification("Pledge kept: " + m_activePledge.description + " (+approval)", "governance", 1);
+        }
+        else
+        {
+          approvalValue = clamp100(approvalValue - m_activePledge.penaltyApproval);
+          pushNotification("Pledge broken: " + m_activePledge.description + " (-approval)", "governance", 2);
+        }
+        m_hasPledge = false;
+        m_activePledge = PolicyPledge{};
+
+        // Re-sync m_approval so election outcome reflects the pledge modifier.
+        m_approval = approvalValue;
+        m_policyConstrained = (m_approval < m_constraintThreshold) || (m_policyLockMonthsRemaining > 0);
+      }
+
       if (m_approval < m_constraintThreshold)
       {
         m_policyLockMonthsRemaining = std::max(m_policyLockMonthsRemaining, m_policyLockMonths);
@@ -534,11 +560,21 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
       if (m_approval < m_softFailThreshold)
       {
         m_lostElection = true;
+        m_consecutiveSuccessfulCheckpoints = 0;
+        clearPledge();
         pushNotification("Election result: You lost re-election. Sandbox mode continues.", "governance", 3);
       }
       else
       {
         m_lostElection = false;
+        ++m_consecutiveSuccessfulCheckpoints;
+
+        if (m_consecutiveSuccessfulCheckpoints >= WIN_CONSECUTIVE_CHECKPOINTS && !m_wonElection)
+        {
+          m_wonElection = true;
+          pushNotification("Electoral victory! You have secured three consecutive terms of office.", "governance", 1);
+        }
+
         pushNotification("Election result: Re-elected by city council.", "governance", 1);
       }
 
@@ -585,6 +621,91 @@ void GovernanceSystem::acknowledgeCheckpoint()
   m_checkpointPending = false;
 }
 
+// ── Pledge API ────────────────────────────────────────────────────────────────
+
+std::vector<PolicyPledge> GovernanceSystem::availablePledges() const
+{
+  std::vector<PolicyPledge> pledges;
+
+  // Always offer one pledge per index that needs attention.
+  if (m_lastIndices.affordability < 60.f)
+    pledges.push_back({"pledge_affordability_above40", "Hold Affordability above 40",
+                       "affordability", "above", 40.f, 5.f, 8.f});
+  else
+    pledges.push_back({"pledge_affordability_above55", "Keep Affordability above 55",
+                       "affordability", "above", 55.f, 7.f, 10.f});
+
+  if (m_lastIndices.safety < 60.f)
+    pledges.push_back({"pledge_safety_above40", "Hold Safety above 40",
+                       "safety", "above", 40.f, 5.f, 8.f});
+  else
+    pledges.push_back({"pledge_safety_above55", "Keep Safety above 55",
+                       "safety", "above", 55.f, 7.f, 10.f});
+
+  if (m_lastIndices.jobs < 55.f)
+    pledges.push_back({"pledge_jobs_above40", "Grow Jobs above 40",
+                       "jobs", "above", 40.f, 5.f, 8.f});
+  else
+    pledges.push_back({"pledge_jobs_above55", "Sustain Jobs above 55",
+                       "jobs", "above", 55.f, 7.f, 10.f});
+
+  if (m_lastIndices.pollution > 55.f)
+    pledges.push_back({"pledge_pollution_below65", "Cut Pollution below 65",
+                       "pollution", "below", 65.f, 5.f, 8.f});
+  else
+    pledges.push_back({"pledge_pollution_below45", "Hold Pollution below 45",
+                       "pollution", "below", 45.f, 7.f, 10.f});
+
+  return pledges;
+}
+
+bool GovernanceSystem::setPledge(const std::string &pledgeId)
+{
+  const auto pledges = availablePledges();
+  const auto it = std::find_if(pledges.begin(), pledges.end(),
+                                [&pledgeId](const PolicyPledge &p) { return p.id == pledgeId; });
+  if (it == pledges.end())
+    return false;
+
+  m_hasPledge = true;
+  m_activePledge = *it;
+  return true;
+}
+
+void GovernanceSystem::clearPledge()
+{
+  m_hasPledge = false;
+  m_activePledge = PolicyPledge{};
+}
+
+bool GovernanceSystem::evaluatePledge(const PolicyPledge &pledge, const CityIndicesData &indices,
+                                      float currentApproval) const
+{
+  float value = 0.f;
+  const std::string key = normalizedKey(pledge.targetIndex);
+
+  if (key == "affordability")
+    value = indices.affordability;
+  else if (key == "safety")
+    value = indices.safety;
+  else if (key == "jobs")
+    value = indices.jobs;
+  else if (key == "commute")
+    value = indices.commute;
+  else if (key == "pollution")
+    value = indices.pollution;
+  else if (key == "approval" || key == "publictrust")
+    value = currentApproval;
+
+  const std::string op = normalizedKey(pledge.op);
+  if (op == "above")
+    return value >= pledge.threshold;
+  if (op == "below")
+    return value <= pledge.threshold;
+
+  return false;
+}
+
 void GovernanceSystem::clearEvents()
 {
   m_events.clear();
@@ -595,6 +716,12 @@ void GovernanceSystem::addEventDefinition(const GovernanceEventDefinition &defin
   GovernanceEventDefinition copy = definition;
   copy.monthsUntilReady = 0;
   m_events.push_back(std::move(copy));
+}
+
+void GovernanceSystem::pushStakeholderReaction(const std::string &reaction, const std::string &category)
+{
+  if (!reaction.empty())
+    pushNotification(reaction, category, 1);
 }
 
 void GovernanceSystem::updatePolicyAvailability()
@@ -698,6 +825,10 @@ GovernancePersistedState GovernanceSystem::persistedState() const
   state.checkpointPending = m_checkpointPending;
   state.taxEfficiencyMultiplier = m_taxEfficiencyMultiplier;
   state.incomeModifier = m_incomeModifier;
+  state.consecutiveSuccessfulCheckpoints = m_consecutiveSuccessfulCheckpoints;
+  state.wonElection = m_wonElection;
+  state.hasPledge = m_hasPledge;
+  state.activePledge = m_activePledge;
   return state;
 }
 
@@ -712,5 +843,9 @@ void GovernanceSystem::applyPersistedState(const GovernancePersistedState &state
   m_checkpointPending = state.checkpointPending;
   m_taxEfficiencyMultiplier = std::max(0.1f, std::min(2.f, state.taxEfficiencyMultiplier));
   m_incomeModifier = std::max(0.1f, std::min(2.f, state.incomeModifier));
+  m_consecutiveSuccessfulCheckpoints = std::max(0, state.consecutiveSuccessfulCheckpoints);
+  m_wonElection = state.wonElection;
+  m_hasPledge = state.hasPledge;
+  m_activePledge = state.activePledge;
   updatePolicyAvailability();
 }

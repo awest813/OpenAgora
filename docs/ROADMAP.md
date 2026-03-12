@@ -406,6 +406,86 @@ Player can now:
 
 ---
 
+## Phase 2.7 – Governance & Policy Depth ✅ Core complete
+
+### 2.7.1 Policy Term Pledges ✅
+
+**Files:** `src/simulation/GovernanceSystem.hxx/.cxx`, `src/game/ui/GovernancePanel.cxx`
+
+At each council checkpoint the player may commit to one measurable term pledge:
+
+- **Dynamic pledge options** – `availablePledges()` returns 4 options scaled to the current
+  city state. If Affordability is struggling (< 60), the pledge asks to hold it above 40;
+  if healthy it asks to sustain it above 55. Same adaptive logic for Safety, Jobs, and Pollution.
+- **Pledge evaluation** – at the *next* checkpoint `evaluatePledge()` checks whether the
+  condition was met. A kept pledge applies `+bonusApproval`; a broken one applies `−penaltyApproval`.
+  Both trigger a notification in the event log.
+- **Persisted state** – `GovernancePersistedState` now carries `hasPledge`, `activePledge`,
+  `consecutiveSuccessfulCheckpoints`, and `wonElection` so the pledge survives save/load.
+- **UI** – pledge selection is shown in the Council Checkpoint modal; the active pledge
+  is shown in the Governance Panel sidebar.
+
+**Tests:** 6 new unit tests in `tests/simulation/GovernanceSystem.cxx` ✅
+
+### 2.7.2 Formal Election Win Condition ✅
+
+**Files:** `src/simulation/GovernanceSystem.hxx/.cxx`, `src/game/ui/GovernancePanel.cxx`
+
+- `GovernanceSystem` tracks `m_consecutiveSuccessfulCheckpoints` (incremented each checkpoint
+  where approval stays above the soft-fail threshold, reset to 0 on election loss).
+- After `WIN_CONSECUTIVE_CHECKPOINTS` (3) consecutive wins: `m_wonElection = true`.
+- UI: "★ Term Secured – three-term majority" banner in the Governance Panel and a
+  "★ Electoral victory secured" banner in the checkpoint modal.
+- Consecutive win streak counter is shown in the panel: "Consecutive wins: N / 3".
+
+### 2.7.3 Stakeholder Reactions on Policy Activation ✅
+
+**Files:** `src/simulation/PolicyEngine.hxx/.cxx`, `src/game/ui/PolicyPanel.cxx`,
+`data/resources/data/policies/*.json`
+
+When the player activates or deactivates a policy that carries reaction text, a civic
+notification is pushed to the governance event log.
+
+**Data fields (JSON → C++ struct):**
+
+| JSON key | C++ field | Description |
+|----------|-----------|-------------|
+| `stakeholder_reaction_on`  | `PolicyDefinition::stakeholderReactionOn`  | Flavour text on activation |
+| `stakeholder_reaction_off` | `PolicyDefinition::stakeholderReactionOff` | Flavour text on deactivation |
+
+**Policies with reactions now authored:** Affordable Housing Fund, Rent Stabilization, Upzoning
+Incentives, Congestion Pricing, Transit Priority Lanes, Community Policing, Clean Air Act,
+Small Business Microloans (8 of 20 policies). Remaining policies use empty strings (silent toggle).
+
+**Implementation:** `GovernanceSystem::pushStakeholderReaction()` is a public helper called
+by `PolicyPanel::draw()` when level transitions cross the inactive/active boundary.
+
+**Tests:** `PolicyEngineV2` – stakeholderReaction fields survive `addDefinition` round-trip ✅
+
+### Phase 2.7 Milestone ✅
+Player governance decisions now carry visible political weight:
+- Council checkpoints reward consistency through consecutive-win tracking and an electoral win flag.
+- Term pledges add a meaningful goal for each council term with real approval consequences.
+- Activating contentious policies (rent control, clean air act, congestion pricing) logs
+  named stakeholder reactions that enrich the event log and reward civic storytelling.
+
+---
+
+## Phase 2.8 – Non-Policy Depth & Polish (planned)
+
+See `GAMEPLAY_ROADMAP.md §Milestone 2.7` for the full feature descriptions.
+
+| Feature | File(s) | Notes |
+|---------|---------|-------|
+| Hard loss (receivership) | `GovernanceSystem`, `GamePlay`, new `ReceivershipScreen` | Challenge difficulty only |
+| End-of-term summary screen | `src/game/ui/EndOfTermScreen.hxx/.cxx` | Win and soft-loss triggered |
+| Tile hover tooltip (local strain) | `Map.cxx`, overlay system | Shows inhabitants, density, pollution |
+| Zone growth visual feedback | `ZoneArea.cxx`, `Signal<TileGrowthEvent>` | Green/red pulse on density change |
+| Index trend sparklines | `CityIndices.hxx` (5-slot ring buffer), `CityIndicesPanel.cxx` | `ImGui::PlotLines` |
+| Policy impact preview tooltip | `PolicyPanel.cxx` | Shows Δ-values before activation |
+
+---
+
 ## Phase 3 – Original IP Conversion (Ongoing / D-track)
 
 This phase runs in parallel with Phase 2 once a stable base exists. It is mostly
@@ -448,8 +528,8 @@ src/
 ├── simulation/     ← pure logic, tick-based, deterministic, no SDL
 │   ├── CityIndices.hxx/.cxx           ✅ (29 simulation tests pass)
 │   ├── AffordabilityModel.hxx/.cxx    ✅
-│   ├── GovernanceSystem.hxx/.cxx      ✅ (choice-based events + persistence hooks)
-│   ├── PolicyEngine.hxx/.cxx          ✅ (levels/prereqs/exclusivity)
+│   ├── GovernanceSystem.hxx/.cxx      ✅ (pledges, win condition, stakeholder reactions)
+│   ├── PolicyEngine.hxx/.cxx          ✅ (levels/prereqs/exclusivity/stakeholder reactions)
 │   ├── BudgetSystem.hxx/.cxx          ✅ (persistence hooks)
 │   ├── EconomyDepthModel.hxx/.cxx     ✅
 │   ├── ServiceStrainModel.hxx/.cxx    ✅
@@ -461,8 +541,8 @@ src/
 │   ├── GamePlay.hxx/.cxx              ✅ (monthly sim tick + churn + zone-type growth wiring)
 │   └── ui/         ← ImGui panels
 │       ├── CityIndicesPanel.hxx/.cxx  ✅
-│       ├── GovernancePanel.hxx/.cxx   ✅
-│       ├── PolicyPanel.hxx/.cxx       ✅ (leveled controls + availability)
+│       ├── GovernancePanel.hxx/.cxx   ✅ (pledge selection, win banner, streak counter)
+│       ├── PolicyPanel.hxx/.cxx       ✅ (leveled controls + availability + stakeholder reactions)
 │       ├── NotificationOverlay.hxx/.cxx ✅
 │       ├── EventLogPanel.hxx/.cxx     ✅
 │       ├── EconomyPanel.hxx/.cxx      ✅
@@ -475,7 +555,7 @@ src/
     └── FeatureFlags.hxx/.cxx          ✅
 
 data/resources/data/
-├── policies/       ← JSON policy definitions  ✅ (20 policies)
+├── policies/       ← JSON policy definitions  ✅ (20 policies, 8 with stakeholder_reaction fields)
 ├── events/         ← JSON event trigger+effect definitions  ✅ (20 events, incl. choice events + compound triggers)
 ├── scenarios/      ← JSON scenario presets  ✅ (5 scenarios)
 └── FeatureFlags.json  ✅ (all Phase 1+2 flags now enabled)

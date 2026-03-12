@@ -6,6 +6,8 @@
   "type": "service_boost",
   "cost_per_month": 380,
   "min_approval": 20,
+  "stakeholder_reaction_on":  "Neighbourhood Watch: 'Officers walking the beat has already made us feel safer. This is the right direction.'",
+  "stakeholder_reaction_off": "Neighbourhood Watch: 'Scaling back community policing will leave vulnerable streets without support.'",
   "levels": [
     {
       "level": 1,

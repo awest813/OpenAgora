@@ -6,6 +6,8 @@
   "type": "budget_sink",
   "cost_per_month": 500,
   "min_approval": 20,
+  "stakeholder_reaction_on":  "Tenants' Coalition: 'This is exactly what our neighbourhoods needed. Families will stay.'",
+  "stakeholder_reaction_off": "Tenants' Coalition: 'Cutting the housing fund will push working families out of the city.'",
   "levels": [
     {
       "level": 1,

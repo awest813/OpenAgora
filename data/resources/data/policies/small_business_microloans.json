@@ -6,6 +6,8 @@
   "type": "service_boost",
   "cost_per_month": 330,
   "min_approval": 25,
+  "stakeholder_reaction_on":  "Business Alliance: 'Access to affordable credit is the lifeblood of main street. Entrepreneurs are ready to hire.'",
+  "stakeholder_reaction_off": "Business Alliance: 'Without microloan support, many corner shops and start-ups will close within the quarter.'",
   "levels": [
     {
       "level": 1,

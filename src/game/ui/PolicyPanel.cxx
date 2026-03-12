@@ -37,8 +37,8 @@ void PolicyPanel::draw() const
   constexpr float panelWidth   = 340.f;
   constexpr float panelHeight  = 360.f;
 
-  // Sits to the right of the left-side panels (which end at ~480 in y).
-  const ImVec2 panelPos{6.f, 480.f};
+  // Sits below the Governance Panel (which now ends at ~494 with new pledge/win content).
+  const ImVec2 panelPos{6.f, 500.f};
 
   UITheme::pushPanelStyle();
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.f, 5.f));
@@ -93,7 +93,8 @@ void PolicyPanel::draw() const
   else
   {
     PolicyEngine &policyEngine = PolicyEngine::instance();
-    const float approval = GovernanceSystem::instance().approval();
+    GovernanceSystem &governance = GovernanceSystem::instance();
+    const float approval = governance.approval();
 
     std::map<std::string, std::vector<const PolicyDefinition *>> grouped;
     for (const auto &def : definitions)
@@ -143,7 +144,20 @@ void PolicyPanel::draw() const
           PolicyAvailability availability = policyEngine.availability(def->id, requestedLevel, approval);
           if (availability.available)
           {
+            const int prevLevel = level;
             policyEngine.setPolicyLevel(def->id, requestedLevel);
+
+            // Push stakeholder reaction notification when policy activation changes.
+            const bool wasActive = prevLevel > 0;
+            const bool isNowActive = requestedLevel > 0;
+            if (!wasActive && isNowActive && !def->stakeholderReactionOn.empty())
+            {
+              governance.pushStakeholderReaction(def->stakeholderReactionOn, def->category);
+            }
+            else if (wasActive && !isNowActive && !def->stakeholderReactionOff.empty())
+            {
+              governance.pushStakeholderReaction(def->stakeholderReactionOff, def->category);
+            }
           }
           else
           {

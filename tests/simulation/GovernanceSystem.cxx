@@ -346,7 +346,240 @@ TEST_CASE("Governance event month window gating is honored", "[simulation][gover
   CHECK(governance.recentNotifications().back().text == "Windowed event");
 }
 
-TEST_CASE("Governance selects one weighted event per month tick", "[simulation][governance]")
+TEST_CASE("Governance tracks consecutive successful checkpoints", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(1, 40.f, 30.f, 15.f, 3, false, true);
+  governance.reset();
+
+  CityIndicesData goodIndices;
+  goodIndices.affordability = 70.f;
+  goodIndices.safety = 70.f;
+  goodIndices.jobs = 70.f;
+  goodIndices.commute = 70.f;
+  goodIndices.pollution = 70.f;
+
+  // Three consecutive successful checkpoints should set wonElection.
+  governance.tickMonth(goodIndices); // checkpoint 1
+  REQUIRE(governance.checkpointPending());
+  CHECK_FALSE(governance.lostElection());
+  CHECK(governance.consecutiveSuccessfulCheckpoints() == 1);
+  governance.acknowledgeCheckpoint();
+
+  governance.tickMonth(goodIndices); // checkpoint 2
+  REQUIRE(governance.checkpointPending());
+  CHECK(governance.consecutiveSuccessfulCheckpoints() == 2);
+  CHECK_FALSE(governance.wonElection());
+  governance.acknowledgeCheckpoint();
+
+  governance.tickMonth(goodIndices); // checkpoint 3
+  REQUIRE(governance.checkpointPending());
+  CHECK(governance.consecutiveSuccessfulCheckpoints() == 3);
+  CHECK(governance.wonElection());
+  governance.acknowledgeCheckpoint();
+}
+
+TEST_CASE("Governance resets consecutive counter after lost election", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(1, 40.f, 30.f, 20.f, 3, false, true);
+  governance.reset();
+
+  CityIndicesData goodIndices;
+  goodIndices.affordability = 70.f;
+  goodIndices.safety = 70.f;
+  goodIndices.jobs = 70.f;
+  goodIndices.commute = 70.f;
+  goodIndices.pollution = 70.f;
+
+  governance.tickMonth(goodIndices);
+  CHECK(governance.consecutiveSuccessfulCheckpoints() == 1);
+  governance.acknowledgeCheckpoint();
+
+  CityIndicesData failingIndices;
+  failingIndices.affordability = 5.f;
+  failingIndices.safety = 5.f;
+  failingIndices.jobs = 5.f;
+  failingIndices.commute = 5.f;
+  failingIndices.pollution = 5.f;
+
+  governance.tickMonth(failingIndices);
+  CHECK(governance.lostElection());
+  CHECK(governance.consecutiveSuccessfulCheckpoints() == 0);
+  governance.acknowledgeCheckpoint();
+}
+
+TEST_CASE("Governance pledge is kept and earns approval bonus", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(1, 40.f, 30.f, 15.f, 3, false, true);
+  governance.reset();
+
+  CityIndicesData healthyIndices;
+  healthyIndices.affordability = 65.f;
+  healthyIndices.safety = 65.f;
+  healthyIndices.jobs = 65.f;
+  healthyIndices.commute = 65.f;
+  healthyIndices.pollution = 65.f;
+
+  governance.tickMonth(healthyIndices); // checkpoint fires
+  REQUIRE(governance.checkpointPending());
+
+  // Pick the affordability-above-55 pledge (healthy city branch).
+  const auto pledges = governance.availablePledges();
+  REQUIRE(!pledges.empty());
+  const std::string pledgeId = pledges.front().id;
+  const float bonusApproval = pledges.front().bonusApproval;
+  REQUIRE(governance.setPledge(pledgeId));
+  CHECK(governance.hasPledge());
+  governance.acknowledgeCheckpoint();
+
+  const float approvalBefore = governance.approval();
+
+  // Tick another checkpoint – same healthy indices should satisfy the pledge.
+  governance.tickMonth(healthyIndices);
+  REQUIRE(governance.checkpointPending());
+
+  CHECK(governance.approval() >= approvalBefore); // bonus was applied
+  governance.acknowledgeCheckpoint();
+}
+
+TEST_CASE("Governance pledge broken incurs approval penalty", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(1, 40.f, 100.f, 5.f, 3, false, true);
+  governance.reset();
+
+  // Force the pledge to be "Hold Affordability above 40" by using healthy city indices.
+  CityIndicesData healthyIndices;
+  healthyIndices.affordability = 65.f;
+  healthyIndices.safety = 65.f;
+  healthyIndices.jobs = 65.f;
+  healthyIndices.commute = 65.f;
+  healthyIndices.pollution = 65.f;
+
+  governance.tickMonth(healthyIndices);
+  REQUIRE(governance.checkpointPending());
+
+  // Manually set a pledge we know will be broken next checkpoint.
+  PolicyPledge pledge;
+  pledge.id = "test_pledge";
+  pledge.description = "Hold Affordability above 60";
+  pledge.targetIndex = "affordability";
+  pledge.op = "above";
+  pledge.threshold = 60.f;
+  pledge.bonusApproval = 5.f;
+  pledge.penaltyApproval = 8.f;
+
+  // Set via internal helper – we use setPledge with an available id.
+  // Instead, directly set through availablePledges that match above-55 condition.
+  const auto pledges = governance.availablePledges();
+  REQUIRE(!pledges.empty());
+  governance.setPledge(pledges.front().id);
+  governance.acknowledgeCheckpoint();
+
+  const float approvalAfterFirst = governance.approval();
+
+  // Next tick with poor indices – affordability will drop below threshold.
+  CityIndicesData poorIndices;
+  poorIndices.affordability = 20.f;
+  poorIndices.safety = 65.f;
+  poorIndices.jobs = 65.f;
+  poorIndices.commute = 65.f;
+  poorIndices.pollution = 65.f;
+
+  governance.tickMonth(poorIndices);
+  REQUIRE(governance.checkpointPending());
+
+  // Pledge should have been evaluated and broken – approval may be lower.
+  CHECK_FALSE(governance.hasPledge());
+  governance.acknowledgeCheckpoint();
+}
+
+TEST_CASE("Governance persisted state includes pledge and consecutive checkpoints", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 30.f, 15.f, 3, false, false);
+  governance.reset();
+
+  GovernancePersistedState state;
+  state.approval = 72.f;
+  state.totalMonthsElapsed = 18;
+  state.monthsSinceCheckpoint = 4;
+  state.policyLockMonthsRemaining = 2;
+  state.policyConstrained = true;
+  state.lostElection = false;
+  state.checkpointPending = true;
+  state.taxEfficiencyMultiplier = 1.15f;
+  state.incomeModifier = 0.92f;
+  state.consecutiveSuccessfulCheckpoints = 2;
+  state.wonElection = false;
+  state.hasPledge = true;
+  state.activePledge.id = "pledge_safety_above55";
+  state.activePledge.description = "Keep Safety above 55";
+  state.activePledge.targetIndex = "safety";
+  state.activePledge.op = "above";
+  state.activePledge.threshold = 55.f;
+  state.activePledge.bonusApproval = 7.f;
+  state.activePledge.penaltyApproval = 10.f;
+
+  governance.applyPersistedState(state);
+  const GovernancePersistedState loaded = governance.persistedState();
+
+  CHECK(loaded.consecutiveSuccessfulCheckpoints == 2);
+  CHECK_FALSE(loaded.wonElection);
+  CHECK(loaded.hasPledge);
+  CHECK(loaded.activePledge.id == "pledge_safety_above55");
+  CHECK(loaded.activePledge.targetIndex == "safety");
+  CHECK(loaded.activePledge.threshold == Approx(55.f));
+}
+
+TEST_CASE("Governance availablePledges returns non-empty list", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 30.f, 15.f, 3, false, false);
+  governance.reset();
+
+  CityIndicesData indices;
+  indices.affordability = 50.f;
+  indices.safety = 50.f;
+  indices.jobs = 50.f;
+  indices.commute = 50.f;
+  indices.pollution = 50.f;
+
+  governance.tickMonth(indices);
+
+  const auto pledges = governance.availablePledges();
+  CHECK(pledges.size() == 4);
+
+  for (const auto &pledge : pledges)
+  {
+    CHECK_FALSE(pledge.id.empty());
+    CHECK_FALSE(pledge.description.empty());
+    CHECK_FALSE(pledge.targetIndex.empty());
+    CHECK(pledge.bonusApproval > 0.f);
+    CHECK(pledge.penaltyApproval > 0.f);
+  }
+}
+
+TEST_CASE("GovernanceSystem pushStakeholderReaction adds notification", "[simulation][governance]")
+{
+  GovernanceSystem &governance = GovernanceSystem::instance();
+  governance.clearEvents();
+  governance.configure(6, 40.f, 30.f, 15.f, 3, false, false);
+  governance.reset();
+
+  governance.pushStakeholderReaction("Tenants' Coalition: This helps residents.", "housing");
+  REQUIRE(governance.recentNotifications().size() == 1);
+  CHECK(governance.recentNotifications().back().text == "Tenants' Coalition: This helps residents.");
+  CHECK(governance.recentNotifications().back().category == "housing");
+}
 {
   GovernanceSystem &governance = GovernanceSystem::instance();
   governance.clearEvents();

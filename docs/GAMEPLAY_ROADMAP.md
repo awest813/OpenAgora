@@ -106,12 +106,33 @@ Build zones  →  City indices change  →  Residents react
 
 > *"Choosing a policy feels like a real political trade-off, not just a number slider."*
 
-### Policy trade-offs with named stakeholder reactions
+### Policy trade-offs with named stakeholder reactions ✅ Partial
 - Each policy category has associated stakeholder groups (tenants, landlords, business owners,
   transit riders, environmental advocates).
-- Enacting a policy logs a short flavour reaction from affected groups in the Event Log.
-- Conflicting stakeholder pressure can trigger follow-up events (e.g., a landlord lobby campaign
-  after rent control, or a tenant coalition boost after affordable housing funding).
+- Enacting or repealing a policy logs a short flavour reaction from affected groups in the Event Log.
+- Implemented via `stakeholder_reaction_on` / `stakeholder_reaction_off` JSON fields on each
+  `PolicyDefinition`; seven policies (housing, transit, safety, environment, economy) already carry
+  reaction text. Remaining policies can be extended incrementally via JSON alone.
+- **Still pending:** conflicting stakeholder pressure triggering follow-up events
+  (e.g., a landlord lobby campaign after rent control). This will be addressed in Phase 3 (Factions).
+
+### Policy term pledges ✅
+- At each council checkpoint, the player chooses one measurable term pledge, or opts out.
+- Pledge options are dynamically derived from the current city state (struggling indices get
+  achievable thresholds; healthy indices get ambitious ones).
+- Delivered at the *next* checkpoint: kept pledge → +approval bonus, broken pledge → trust penalty.
+- Active pledge is shown in the Governance Panel sidebar.
+- Pledge state persists across save/load via `GovernancePersistedState`.
+
+### Formal win condition ✅
+- **Election win**: sustain approval above the soft-fail threshold across three consecutive
+  council checkpoints → `GovernanceSystem::wonElection()` becomes `true`, "★ Term Secured"
+  banner appears in the Governance Panel.
+- **Soft loss** (existing): approval falls below soft-fail threshold at any checkpoint →
+  election lost, restricted policies, sandbox continues.
+- **Hard loss** (Challenge difficulty only): budget balance reaches a critical deficit floor —
+  the city enters receivership. *Not yet wired; planned for Phase 2.7 (see below).*
+- End-of-term summary screen: planned for Phase 2.7.
 
 ### Unlock tree for advanced policies
 - Basic policies are available from the start.
@@ -121,17 +142,55 @@ Build zones  →  City indices change  →  Residents react
   - A lower-tier policy at a minimum level, or
   - A minimum approval rating threshold.
 - The Policy Panel shows locked policies with a clear reason (greyed out with tooltip).
+  *Prerequisite enforcement is already in `PolicyEngine::availability()`; the JSON
+  `requires` field wires it for any policy that needs a precondition.*
 
-### Formal win / loss conditions
-- **Election win**: sustain approval above 50 across three consecutive council checkpoints.
-- **Soft loss**: approval falls below 15 at a checkpoint — the mayor is voted out, but the sandbox continues with restricted policies.
-- **Hard loss** (Challenge difficulty only): budget balance reaches a critical deficit floor — the city enters receivership and the run ends.
-- End-of-term summary screen shows key decisions, final index scores, and a resident quote.
+---
 
-### Policy term pledges
-- At each council checkpoint, the player commits to 1–2 policy pledges for the next term
-  (e.g., "I will hold Affordability above 50" or "I will reduce Pollution by 10 points").
-- Delivering on pledges gives an approval bonus; breaking them triggers a trust penalty event.
+## Milestone 2.7 – Non-Policy Depth & Polish (planned for v0.6.5)
+
+> *"The simulation feels real and complete, not just index numbers."*
+
+These features are not policy-system work but are needed before Milestone 3 to feel polished.
+
+### Hard loss condition
+- **Challenge difficulty only:** when `BudgetSystem::currentBalance()` falls below a configurable
+  `deficitFloor` (e.g. −10 000), the city enters receivership.
+- `GovernanceSystem` gets a new `inReceivershipMode()` flag; the game loop in `GamePlay.cxx`
+  checks it each month and sets a `GameState::GAME_OVER` flag.
+- UI: a full-screen modal "City Entered Receivership" with final index scores and a
+  "Return to Main Menu" button.
+
+### End-of-term summary screen
+- Triggered when `wonElection()` becomes `true` OR the player dismisses a lost-election checkpoint.
+- Shows: final approval, final index scores, a short one-line city narrative ("Your city grew
+  by X residents. Affordability reached Y."), and a list of the last 5 governance events.
+- Implemented as a new `EndOfTermScreen` ImGui modal in `src/game/ui/`.
+
+### Tile hover tooltip: local strain contribution
+- When the player hovers a residential or commercial tile, a small tooltip shows:
+  - The tile's `TileData` inhabitant count.
+  - Its zone density tier and contribution to the displacement pressure.
+  - Local pollution level from neighbours.
+- Implemented by extending `Map::renderMap()` to detect hovered tile and forwarding a
+  `LocalTileStats` struct to the overlay system.
+
+### Zone growth visual feedback
+- A brief particle-burst or colour pulse plays on a tile when a zone building spawns or grows.
+- Residential upscale (LOW→MEDIUM→HIGH density) shows a green glow, downscale shows a red one.
+- Implemented in `ZoneArea::spawnBuildings()` by publishing a `Signal<TileGrowthEvent>`.
+
+### Index trend history sparkline
+- The `CityIndicesPanel` gets a small sparkline (5-month rolling window) next to each index bar
+  instead of just a trend arrow.
+- `CityIndices` already stores `previous()`; extend it to a 5-slot ring buffer.
+- Rendered with `ImGui::PlotLines()` inline in `CityIndicesPanel::draw()`.
+
+### Policy impact preview
+- When the player hovers a policy toggle (before activating), a small popup shows
+  predicted Δ values for the indices it affects.
+- Data comes directly from `PolicyEffect` fields — no simulation needed.
+- Implemented as a formatted tooltip in `PolicyPanel::draw()`.
 
 ---
 
@@ -224,8 +283,9 @@ These features are aspirational and subject to community interest:
 | Milestone | Version | Theme | Key Gameplay Addition |
 |-----------|---------|-------|----------------------|
 | Proof of Concept | v0.4 ✅ | Policy sandbox | Indices, policies, events, council checkpoints |
-| The Living City | v0.5 | Growth wired | Economy multipliers, scenarios, difficulty |
-| Politics Matters | v0.6 | Trade-offs | Stakeholder reactions, unlock tree, win/loss |
+| The Living City | v0.5 ✅ | Growth wired | Economy multipliers, scenarios, difficulty |
+| Politics Matters | v0.6 | Trade-offs | Stakeholder reactions ✅, pledges ✅, win condition ✅, unlock tree |
+| Non-Policy Depth | v0.6.5 | Polish | Hard loss, end-of-term screen, sparklines, tile tooltips |
 | Narrative & Factions | v0.7 | Political life | Advisor, factions, campaign chain |
 | Original IP Launch | v1.0 | Own identity | Art, audio, lore, tutorial, mod support |
 | Regional Expansion | Post-1.0 | Scale up | Regional map, parties, multiplayer |

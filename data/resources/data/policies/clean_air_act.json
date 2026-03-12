@@ -6,6 +6,8 @@
   "type": "tax_modifier",
   "cost_per_month": 520,
   "min_approval": 35,
+  "stakeholder_reaction_on":  "Green Council: 'Enforceable air standards are a generational win for public health and our children.' Business Alliance: 'Compliance costs will hit our manufacturing sector hard this quarter.'",
+  "stakeholder_reaction_off": "Business Alliance: 'Rolling back these standards gives our industry room to breathe again.' Green Council: 'Abandoning clean air protections risks reversing a decade of progress.'",
   "levels": [
     {
       "level": 1,

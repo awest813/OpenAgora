@@ -214,6 +214,8 @@ void PolicyEngine::loadPolicies()
     def.description = parsed.value("description",  std::string{});
     def.category    = parsed.value("category",     std::string{"general"});
     def.type        = parsed.value("type",         std::string{"budget_sink"});
+    def.stakeholderReactionOn  = parsed.value("stakeholder_reaction_on",  std::string{});
+    def.stakeholderReactionOff = parsed.value("stakeholder_reaction_off", std::string{});
     def.costPerMonth = parsed.value("cost_per_month", 0);
     def.minApproval = parsed.value("min_approval", 0.f);
     def.durationMonths = std::max(0, parsed.value("duration_months", 0));

@@ -39,6 +39,8 @@ struct PolicyDefinition
   std::string description;
   std::string category; ///< "housing", "transit", "safety", "environment", ...
   std::string type; ///< "budget_sink" | "zone_modifier" | "service_boost" | "tax_modifier"
+  std::string stakeholderReactionOn;  ///< Flavour text shown when this policy is activated
+  std::string stakeholderReactionOff; ///< Flavour text shown when this policy is deactivated
   int costPerMonth  = 0;
   float minApproval = 0.f;
   int durationMonths = 0; ///< Optional temporary policy duration (0 = permanent while active)
