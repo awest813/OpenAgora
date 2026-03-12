@@ -50,12 +50,22 @@ void EconomyPanel::draw() const
   UITheme::sectionHeader("  Economy");
 
   ui::Text("Month: %d", ctx.month);
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Current month of the simulation.");
 
   const float balance = budget.currentBalance();
   ui::TextColored(balance >= 0.f ? UITheme::COL_GREEN : UITheme::COL_RED,
                   "Balance: %.0f", balance);
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Current treasury balance. Negative values indicate debt.");
+
   ui::Text("Tax efficiency: %.2fx", ctx.taxEfficiency);
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Multiplier for tax revenue, influenced by policies and city indices.");
+
   ui::Text("Growth modifier: %.2fx", ctx.growthRateModifier);
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Global multiplier for zone development speed.");
 
   ui::Separator();
   UITheme::sectionHeader("  Economy Depth");
