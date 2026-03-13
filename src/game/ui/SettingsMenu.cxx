@@ -206,10 +206,14 @@ void SettingsMenu::draw() const
 
   if (ui::ButtonCt("OK", ImVec2(btnW, 40.f)))
     uiManager.closeMenu();
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Close settings menu (changes are applied immediately)");
 
   ui::SameLine(0.f, gap);
   if (ui::ButtonCt("Cancel", ImVec2(btnW, 40.f)))
     uiManager.closeMenu();
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Close settings menu");
 
   ui::SameLine(0.f, gap);
   ui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.35f, 0.25f, 0.08f, 1.f));

@@ -188,6 +188,8 @@ void NewGameScreen::draw() const
   // Back button (left)
   if (ui::ButtonCt("Back", ImVec2(footerBtnW, footerBtnH)))
     m_result = e_close;
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Return to the main menu");
 
   // Start Game button (right, green tint)
   ui::SameLine(winW - 44.f - footerBtnW);
@@ -208,6 +210,8 @@ void NewGameScreen::draw() const
   }
   if (!hasScenarios)
     ui::EndDisabled();
+  if (ui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    ui::SetTooltip("Begin a new simulation with the selected scenario and difficulty");
   ui::PopStyleColor(3);
 
   UITheme::popButtonStyle();
