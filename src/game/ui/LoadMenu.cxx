@@ -125,6 +125,8 @@ void LoadMenu::draw() const
   ui::SetCursorPosX((winW - btnW) * 0.5f);
   if (ui::ButtonCt("Close", ImVec2(btnW, 38.f)))
     m_result = e_close;
+  if (ui::IsItemHovered())
+    ui::SetTooltip("Close without loading a city");
 
   UITheme::popButtonStyle();
   ImGui::PopStyleVar(2);

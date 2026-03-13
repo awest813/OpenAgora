@@ -277,6 +277,8 @@ void GovernancePanel::draw() const
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.22f, 0.30f, 0.42f, 1.f));
       if (ui::Button("No pledge", ImVec2(-1.f, 0.f)))
         governance.clearPledge();
+      if (ui::IsItemHovered())
+        ui::SetTooltip("Do not commit to any specific goal for this term.");
       if (noneSelected)
         ImGui::PopStyleColor();
     }
@@ -336,6 +338,8 @@ void GovernancePanel::draw() const
       governance.acknowledgeCheckpoint();
       ui::CloseCurrentPopup();
     }
+    if (ui::IsItemHovered())
+      ui::SetTooltip("Close this dialogue and resume the game.");
     UITheme::popButtonStyle();
 
     ui::EndPopup();
