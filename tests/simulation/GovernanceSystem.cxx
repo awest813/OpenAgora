@@ -580,6 +580,8 @@ TEST_CASE("GovernanceSystem pushStakeholderReaction adds notification", "[simula
   CHECK(governance.recentNotifications().back().text == "Tenants' Coalition: This helps residents.");
   CHECK(governance.recentNotifications().back().category == "housing");
 }
+
+TEST_CASE("GovernanceSystem Weighted Random Selection", "[simulation][governance]")
 {
   GovernanceSystem &governance = GovernanceSystem::instance();
   governance.clearEvents();

@@ -452,6 +452,9 @@ void GovernanceSystem::tickMonth(const CityIndicesData &indices)
                                         approvalValue});
     const bool allowEventEvaluation = distressMin <= m_eventThreshold;
     std::vector<size_t> eligibleEventIndices;
+    // ⚡ Bolt: Reserve capacity to avoid dynamic reallocations when collecting eligible events
+    eligibleEventIndices.reserve(m_events.size());
+
     for (size_t i = 0; i < m_events.size(); ++i)
     {
       auto &eventDef = m_events[i];

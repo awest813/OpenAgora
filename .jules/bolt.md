@@ -9,3 +9,11 @@
 ## 2025-03-09 - Reduce duplicate neighbor calculation in calculateAutotileBitmask
 **Learning:** `MapFunctions::calculateAutotileBitmask` was querying `getNeighborNodes(coordinate, false)` multiple times inside a loop traversing map layers. This function internally iterates a 3x3 grid around the coordinate, which is heavily CPU-intensive when running auto-tiling logic for multiple tiles and layers during map modification/generation.
 **Action:** Lifted `getNeighborNodes` outside the layer traversal loop and cached the result in a local `const std::vector<NeighborNode>` variable. This reuses the calculated neighbor nodes for every layer evaluation and speeds up auto-tiling mask generation significantly without changing behavior. Included `vector::reserve` optimization to `getNeighborNodes` itself as well.
+
+## 2025-03-09 - UI Menu Optimization Rejection
+**Learning:** `std::map` to `std::unordered_map` conversions must be applied carefully in UI code. While converting string-keyed lookup maps to `std::unordered_map` achieves O(1) performance (like in `BuildMenu::createSubMenus`), it also scrambles the iteration order. UI components often implicitly rely on `std::map`'s automatic alphabetical key sorting for display consistency (e.g., ordering menu categories). Converting them to unordered maps causes severe functional regressions via randomly sorted UI elements.
+**Action:** Avoid swapping `std::map` to `std::unordered_map` in any user-facing rendering or UI generation loops unless the ordering is explicitly handled elsewhere or provably irrelevant. Reverted my attempt and applied a `std::vector::reserve()` optimization in the simulation backend instead.
+
+## 2025-03-09 - Pre-allocation in Governance Evaluation Loops
+**Learning:** The simulation's monthly update cycle evaluates all registered governance events to filter eligible ones into a `std::vector`. Since this vector is cleared and repopulated dynamically on every tick, it incurs repeated O(n) reallocation overhead relative to the number of loaded events.
+**Action:** Added `eligibleEventIndices.reserve(m_events.size())` to `GovernanceSystem::evaluateEvents` prior to the filtering loop. This pre-allocates enough capacity for the absolute worst-case scenario (all events are eligible), turning all subsequent `push_back` operations into O(1) insertions with zero reallocations.
