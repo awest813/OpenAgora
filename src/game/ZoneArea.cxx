@@ -68,23 +68,23 @@ TileSize ZoneArea::getMaximumTileSize(Point originPoint)
 
   for (int distance = 1; distance <= possibleSize.width || distance <= possibleSize.height; distance++)
   {
-    std::vector<Point> xDirection = PointFunctions::getArea({originPoint.x - distance, originPoint.y}, originPoint);
-    std::vector<Point> yDirection = PointFunctions::getArea(originPoint, {originPoint.x, originPoint.y + distance});
     // check if there's a tile in x direction (top of the origin point)
     bool increaseX = true;
     bool increaseY = true;
 
-    for (auto coord : xDirection)
+    // ⚡ Bolt: Removed std::vector allocations via getArea(). Check inline to avoid O(N) heap allocations.
+    for (int x = originPoint.x - distance; x <= originPoint.x; ++x)
     {
-      if (!isMemberOf(coord))
+      if (!isMemberOf({x, originPoint.y}))
       {
         increaseX = false;
         break;
       }
     }
-    for (auto coord : yDirection)
+
+    for (int y = originPoint.y; y <= originPoint.y + distance; ++y)
     {
-      if (!isMemberOf(coord))
+      if (!isMemberOf({originPoint.x, y}))
       {
         increaseY = false;
         break;
