@@ -207,7 +207,11 @@ void NewGameScreen::draw() const
     m_result = e_start_game;
   }
   if (!hasScenarios)
+  {
     ui::EndDisabled();
+    if (ui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+      ui::SetTooltip("No scenarios found. Cannot start a new game.");
+  }
   ui::PopStyleColor(3);
 
   UITheme::popButtonStyle();
